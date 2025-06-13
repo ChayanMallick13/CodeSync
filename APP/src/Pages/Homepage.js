@@ -1,0 +1,73 @@
+import React, { useRef } from "react";
+import HeroModel from "../Components/Core/HeroModel";
+import { FaPlay } from "react-icons/fa";
+import backgroundImage from "../Assets/BackgroundImages/27230.jpg";
+import { features } from "../Assets/Data/features";
+import FeautureBox from "../Components/Common/FeautureBox";
+import Footer from "../Components/Common/Footer";
+
+const Homepage = () => {
+  const featuresRef = useRef(null);
+  return (
+    <>
+      <div className="w-full text-white bg-black relative">
+        <img
+          alt=""
+          src={backgroundImage}
+          className="absolute w-screen h-[620px]"
+        />
+        <div className="w-10/12 mx-auto flex flex-col-reverse lg:flex-row items-center">
+          {/* Left: Text */}
+          <div
+            className="w-full lg:w-1/2 flex flex-col lg:ml-10 z-10
+        "
+          >
+            <h2 className="text-5xl font-extrabold">Code Together.</h2>
+            <h2 className="text-5xl font-extrabold">Build Faster.</h2>
+            <p className="py-8 text-slate-400/80 text-lg">
+              Real-time collaborative code editor that syncs instantly across
+              all devices. Code with your team like never before.
+            </p>
+            <button
+              className="bg-white bg-opacity-20 text-slate-200 font-semibold px-6 py-3 rounded-lg w-fit hover:bg-opacity-30
+          transition-all flex items-center gap-x-3 border-[1px]"
+            >
+              <FaPlay />
+              <span>Try Live Demo</span>
+            </button>
+          </div>
+
+          {/* Right: Model */}
+          <div className="w-full lg:w-1/2 h-[600px]">
+            <HeroModel />
+          </div>
+        </div>
+      </div>
+      <div className="w-screen text-white mb-96">
+        <div className="w-10/12 mx-auto mt-20"
+        ref={featuresRef}
+        >
+              <h3 className="text-center text-4xl mb-4 font-extrabold">Powerful Features</h3>
+              <p
+              className="text-lg text-slate-500 font-bold text-center"
+              >Everything you need for collaborative coding</p>
+              <div className="flex justify-between mt-10">
+                {
+                  features.map((feature,key) => {
+                    return <FeautureBox
+                      key={key}
+                      {...feature}
+                    />
+                  })
+                }
+              </div>
+        </div>
+      </div>
+      <Footer
+        featureScrollRef = {featuresRef}
+      />
+    </>
+  );
+};
+
+export default Homepage;

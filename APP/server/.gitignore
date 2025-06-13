@@ -1,0 +1,16 @@
+
+
+// ignore the node modules
+**/node_modules/
+
+//ignore the env files
+*.env
+
+//ignore the ds store 
+*.DS_Store
+
+//ignore the build folder
+**/build/
+
+//ignore the vscode files
+.vscode/
