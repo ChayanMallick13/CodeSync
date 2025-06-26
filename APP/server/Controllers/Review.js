@@ -112,7 +112,7 @@ exports.getAllReviews = async (req, res) => {
         {
             rating:-1,
         }
-    );
+    ).populate('user').exec();
 
     return res.status(200).json({
       success: true,

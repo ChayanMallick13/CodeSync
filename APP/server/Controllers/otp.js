@@ -1,3 +1,4 @@
+const providerTypes = require("../Data/providerTypes");
 const OTP = require("../Models/otp");
 const User = require("../Models/User");
 const otpGenerator = require('otp-generator');
@@ -14,7 +15,7 @@ exports.sendOtp = async(req,res) => {
             email,
         });
 
-        if(userExits){
+        if(userExits && userExits.accountType.includes(providerTypes.TRADITIONAL)){
             return res.status(403).json(
                 {
                     success:false,

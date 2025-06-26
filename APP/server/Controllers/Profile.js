@@ -174,6 +174,7 @@ exports.changeProfilePicture = async(req,res) => {
             )
         }
         const previousImage = userExists.image;
+        console.log('file',req.files);
         const newImage = req.files?.profilePicture;
         
         if(isCloudinaryUrl(previousImage)){

@@ -5,16 +5,21 @@ import backgroundImage from "../Assets/BackgroundImages/27230.jpg";
 import { features } from "../Assets/Data/features";
 import FeautureBox from "../Components/Common/FeautureBox";
 import Footer from "../Components/Common/Footer";
+import ReviewSlider from "../Components/Common/ReviewSlider";
 
 const Homepage = () => {
   const featuresRef = useRef(null);
+  const topRef = useRef(null);
   return (
     <>
-      <div className="w-full text-white bg-black relative">
+
+      <div 
+      ref={topRef}
+      className="w-full text-white bg-black relative">
         <img
           alt=""
           src={backgroundImage}
-          className="absolute w-screen h-[620px]"
+          className="absolute w-[100%] h-[620px]"
         />
         <div className="w-10/12 mx-auto flex flex-col-reverse lg:flex-row items-center">
           {/* Left: Text */}
@@ -43,7 +48,7 @@ const Homepage = () => {
           </div>
         </div>
       </div>
-      <div className="w-screen text-white mb-96">
+      <div className="w-full text-white">
         <div className="w-10/12 mx-auto mt-20"
         ref={featuresRef}
         >
@@ -51,7 +56,7 @@ const Homepage = () => {
               <p
               className="text-lg text-slate-500 font-bold text-center"
               >Everything you need for collaborative coding</p>
-              <div className="flex justify-between mt-10">
+              <div className="flex justify-between mt-10 flex-wrap gap-y-4">
                 {
                   features.map((feature,key) => {
                     return <FeautureBox
@@ -62,9 +67,19 @@ const Homepage = () => {
                 }
               </div>
         </div>
+        <div className="w-10/12 mx-auto mt-36">
+              <h3 className="text-center text-4xl mb-4 font-extrabold">Loved by Developers</h3>
+              <p
+              className="text-lg text-slate-500 font-bold text-center"
+              >See what our users have to say</p>
+        </div>
+        <div className="w-[90%] mx-auto mb-32 mt-16">
+          <ReviewSlider/>
+        </div>
       </div>
       <Footer
         featureScrollRef = {featuresRef}
+        topScrollRef = {topRef}
       />
     </>
   );

@@ -36,8 +36,6 @@ exports.auth = async(req,res,next) => {
         
         req.user = userExits;
 
-        console.log('req -> ',req.user);
-
         next();
 
     } catch (error) {

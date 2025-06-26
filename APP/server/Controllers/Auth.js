@@ -242,7 +242,7 @@ exports.handleSignIn = async (req, res) => {
     } catch (error) {
         console.error(error);
         console.log('Some Error in Loggin You In');
-        if(req.body.accountType==='traditional'){
+        if(req.body.accountType===providerTypes.GITHUB){
             return res.redirect(process.env.UNSUCCESSFULL_LOGIN_REDIRECT);
         }
         else{
@@ -266,11 +266,15 @@ exports.handleSignUp = async (req, res) => {
       image,
       email,
       password,
+      confirmPassword,
       accountType,
       success,
       token,
       otp
     } = req.body;
+
+
+    console.log(otp,typeof(otp),success);
 
     // console.log(req.body);
 
@@ -290,11 +294,20 @@ exports.handleSignUp = async (req, res) => {
       }
     }
 
+    if(confirmPassword && confirmPassword!==password){
+      return res.status(400).json({
+        success: false,
+        message: "Passwords Do Not Match"
+      });
+    }
+
 
     //check if the user already exits
     let userExists = await User.findOne({
       email,
     });
+
+    console.log(accountType);
 
     if(userExists && userExists.accountType.includes(accountType)){
         if(accountType==='traditional'){
@@ -316,10 +329,10 @@ exports.handleSignUp = async (req, res) => {
 
     const recentotp = await OTP.find({
         email,
-    }).sort({CreatedAt:-1}).limit(1);
+    }).sort({CreatedAt:-1});
 
 
-    if(accountType==='traditional' && (recentotp.at(0).otp!==`${otp}`)){
+    if(accountType==='traditional' && (recentotp.at(-1).otp!==`${otp}`)){
         return res.status(401).json(
             {
                 success:false,
@@ -387,6 +400,16 @@ exports.handleSignUp = async (req, res) => {
           });
 
         }
+      }
+      else{
+        //else create a new token entry for this provider  and make this new entry type possible for User
+          await User.findByIdAndUpdate(userExists._id, {
+            $push: {
+              accountType: accountType,
+            },
+            password,
+            lastName:(userExists.lastName??lastName),
+          });
       }
     }
     
@@ -460,7 +483,7 @@ exports.sendChangePasswordMail = async(req,res) => {
       }
     );
 
-    const resetLink = `${process.env.FRONT_END_URL}/resetpassword?token=${token}`;
+    const resetLink = `${process.env.FRONT_END_URL}/resetpassword/${token}`;
     //make a mail to the user
     await mailSender(existingUser.email,
       'Reset Your Password – CodeSync Account Security',
@@ -492,6 +515,7 @@ exports.sendChangePasswordMail = async(req,res) => {
 exports.resetPassword = async(req,res) => {
   try {
     const {token,password,confirmPassword} = req.body;
+    console.log(req.body);
 
     const user = await User.findOne({
       resetpasswordToken:{

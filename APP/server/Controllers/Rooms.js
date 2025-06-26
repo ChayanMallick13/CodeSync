@@ -34,7 +34,7 @@ exports.getGithubFileContent = async(file,token,name,owner,folderId,userId,roomI
         const buff = Buffer.from(fileData,'base64');
 
         const extension = file.path.split('.').at(-1);
-        let name = "";
+        name = "";
         const parts = file.path.split('.');
         for(let x of parts){
             if(x===extension){
@@ -160,16 +160,20 @@ exports.getFolderContent = async(folderId,owner,name,sha,isroot,branch,token,roo
 exports.createRoomForGithubRepo = async(req,res) => {
     try {
         const user = req.user;
-        const {owner,branch,name} = req.body.repo;
-        const {roomName} = req.body;
+        let {owner,branch,name,description} = req.body;
 
         if(!user || !owner || !branch || !name ){
+            console.log(user,owner,branch,name);
             return res.status(404).json(
                 {
                     success:false,
                     message:"Invalid Request",
                 }
             )
+        }
+
+        if(!description){
+            description = 'No Description';
         }
 
         const reqUser = await User.findById(user._id);
@@ -196,7 +200,7 @@ exports.createRoomForGithubRepo = async(req,res) => {
         const rootFolder = await Folder.create(
             {
                 isRoot:true,
-                name:roomName,
+                name:name,
                 owner:reqUser._id,
             }
         );
@@ -209,6 +213,7 @@ exports.createRoomForGithubRepo = async(req,res) => {
                 owner:reqUser._id,
                 rootFolder:rootFolder._id,
                 name:name,
+                description,
             }
         );
 
@@ -275,7 +280,7 @@ exports.getRoomDetails = async(req,res) => {
         const reqUser = await User.findById(user._id);
         const room = await RoomModel.findById(roomId);
 
-        if(!room || !reqUser || room.owner!==reqUser._id){
+        if(!room || !reqUser){
             return res.status(401).json(
                 {
                     success:false,
@@ -294,8 +299,15 @@ exports.getRoomDetails = async(req,res) => {
         .exec()
         ;
 
-        // use recursion to get all folder info
-        roomInfo.rootFolder = this.populateAllRecursiveFolders(roomInfo.rootFolder);
+        // get the permissions
+        const permissions = await Permissions.findOne(
+            {
+                User:reqUser._id,
+                Room:roomInfo._id,
+            }
+        );
+
+        roomInfo.permissions = permissions;
 
         // return response 
         return res.status(200).json(
@@ -442,4 +454,106 @@ exports.isUserActionAllowed = async(room,reqUser,action,item) => {
     return isActionAllowed;
 }
 
-// rename a room
+// get all rooms
+exports.getUserRooms = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const id = user._id;
+    let allRooms = await RoomModel.find({
+        $or:[
+            {permittedUsers:id},
+            {owner:id},
+        ]
+    }).populate('activeUsers.user') // populate user inside activeUsers
+    .exec();
+
+    for(let i = 0;i<allRooms.length;i++){
+        const permisiions = await Permissions.findOne({
+            User:id,
+            Room:allRooms[i]._id,
+        });
+        allRooms[i].joinCode = null;
+        allRooms[i] = {...allRooms[i].toObject(),permissions:permisiions};
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "All rooms fetched successfully",
+      allRooms,
+    });
+
+  } catch (error) {
+    console.error(error);
+    console.log('Some Internal Problem in getUserRooms');
+    return res.status(500).json({
+      success: false,
+      message: 'Some Internal Problem in getting User Rooms'
+    });
+  }
+};
+
+// join a room
+exports.joinARoom = async(req,res) => {
+    try {
+        const {roomId,joinCode} = req.body;
+        const reqUser = req.user;
+
+        if(!roomId || !joinCode || !reqUser._id){
+            return res.status(401).json({
+              success: false,
+              message: "Invalid Request"
+            });
+        }
+
+        // find the room
+        const room = await RoomModel.findById(roomId);
+        if(!room){
+            return res.status(404).json({
+              success: false,
+              message: "No Such Room Found"
+            });
+        }
+
+        if((!(room.owner!==reqUser._id)) && (!room.permittedUsers.includes(reqUser._id))){
+            if(room.joinCode!==joinCode){
+                return res.status(401).json({
+                  success: false,
+                  message: "Wrong Join Code"
+                });
+            }
+            await RoomModel.findByIdAndUpdate(room._id,{
+                $push:{
+                    permittedUsers:reqUser._id,
+                }
+            },{new:true})
+
+            // create a new permission for the user enabled all
+            const newPermissions = await Permissions.create(
+                {
+                    User:reqUser._id,
+                    delete:true,
+                    read:true,
+                    write:true,
+                    Room:room._id,
+                }
+            );
+        }
+
+        return res.status(200).json(
+            {
+                success:true,
+                message:"User Added to Room"
+            }
+        )
+    } catch (error) {
+        console.log('Some Problem in Join Room');
+        console.error(error);
+        return res.status(500).json(
+            {
+                success:false,
+                message:"Some Problem Occurred in Join Room"
+            }
+        )
+    }
+}

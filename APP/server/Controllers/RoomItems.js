@@ -6,6 +6,7 @@ const RoomModel = require('../Models/Room');
 const { removeFileFromCloudinary } = require("../Utilities/FileRemover");
 const { deleteFoldersRecursively, isUserActionAllowed } = require("./Rooms");
 const Permissions = require("../Models/Permissions");
+const ChatMessage = require("../Models/ChatMessage");
 
 
 
@@ -403,14 +404,17 @@ exports.getFolderDetails = async(req,res) => {
         }
 
         const room = await RoomModel.findById(roomId);
-        const folder = Folder.findById(folderId)
+        // console.log(room);
+        const folder = await Folder.findById(folderId)
         .populate('Files')
         .populate('Medias')
         .exec();
 
+        // console.log(folder);
+
         const isReadAloowed = await isUserActionAllowed(room,reqUser,'read',folder);
 
-        if(!isReadAloowed){
+        if(!isReadAloowed && !room.owner===reqUser._id){
             return res.status(401).json(
                 {
                     success:false,
@@ -437,3 +441,48 @@ exports.getFolderDetails = async(req,res) => {
         )
     }
 }
+
+// get all room chats 
+exports.getRoomChats = async (req, res) => {
+  try {
+    const user = req.user;
+    const {roomId} = req.body;
+
+    if(!user._id || !roomId){
+        return res.status(404).json({
+          success: false,
+          message: "Invalid Request"
+        });
+    }
+
+    const room = await RoomModel.findById(roomId);
+    if(!room || (!(room.owner!==user._id) && !room.permittedUsers.includes(user._id))){
+        return res.status(401).json({
+          success: false,
+          message: "Inavlid Request"
+        });
+    }
+
+    const messages = await ChatMessage.find({
+        Room:room._id,
+    }).sort(
+        {
+            sentAt:1,
+        }
+    ).populate('Sender');
+
+    return res.status(200).json({
+      success: true,
+      message: "All Messages Fetched",
+      messages,
+    });
+
+  } catch (error) {
+    console.error(error);
+    console.log('Some Internal Problem in getRoomChats');
+    return res.status(500).json({
+      success: false,
+      message: 'Some Internal Problem in getting Room Chats'
+    });
+  }
+};

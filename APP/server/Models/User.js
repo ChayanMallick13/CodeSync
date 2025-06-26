@@ -12,10 +12,6 @@ const UserSchema = new mongoose.Schema(
             type:String,
             trim:true,
         },
-        Rooms:[{
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"Room",
-        }],
         email:{
             type:String,
             required:true,
@@ -35,7 +31,6 @@ const UserSchema = new mongoose.Schema(
         resetpasswordToken:{
             token:{
                 type:String,
-                required:true,
             },
             createdAt:{
                 type:Date,

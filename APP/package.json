@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@react-oauth/google": "^0.12.2",
     "@reduxjs/toolkit": "^2.8.2",
     "@splinetool/react-spline": "^4.0.0",
@@ -12,12 +13,21 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-github-login-button": "^1.0.1",
+    "react-hook-form": "^7.57.0",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
+    "react-otp-input": "^3.1.1",
+    "react-password-strength-bar": "^0.4.1",
     "react-redux": "^9.2.0",
+    "react-resizable-panels": "^3.0.3",
     "react-router-dom": "^7.6.2",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "react-stars": "^2.2.5",
+    "socket.io-client": "^4.8.1",
+    "swiper": "^11.2.8",
+    "web-vitals": "^2.1.4",
+    "y-monaco": "^0.1.6",
+    "y-websocket": "^3.0.0"
   },
   "repository": {
     "type": "git",
