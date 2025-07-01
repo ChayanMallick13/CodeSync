@@ -10,6 +10,7 @@ const apiConnector = require("../Utilities/apiConnector");
 exports.changeUserPermmissions = async(req,res) => {
     try {
         const {targetUser,isread,iswrite,isdelete,roomId} = req.body;
+        // console.log(req.body);
         const userId = req.user._id;
         
         if(!targetUser || !userId || !roomId){
@@ -24,8 +25,12 @@ exports.changeUserPermmissions = async(req,res) => {
         const reqUser = await User.findById(userId);
         const targetUserInfo = await User.findById(targetUser);
         const room = await Room.findById(roomId);
+        const oldPermission = await Permissions.findOne({
+            Room:room._id,
+            User:targetUser,
+        })
 
-        if(!reqUser || !targetUserInfo || !room || room.owner!==reqUser._id){
+        if(!reqUser || !targetUserInfo || !room || ((!(room.owner.equals(reqUser._id))) && (!oldPermission?.delete))){
             return res.status(404).json(
                 {
                     success:false,
@@ -43,6 +48,7 @@ exports.changeUserPermmissions = async(req,res) => {
                 Room:room._id,
             }
         );
+        // console.log(prev);
         const permission = await Permissions.findByIdAndUpdate(prev._id,
             {
                 read:isread,
@@ -50,8 +56,9 @@ exports.changeUserPermmissions = async(req,res) => {
                 write:iswrite,
                 User:targetUserInfo._id,
                 Room:room._id,
-            }
+            },{new:true}
         );
+        // console.log(permission);
 
         return res.status(200).json(
             {
@@ -70,73 +77,6 @@ exports.changeUserPermmissions = async(req,res) => {
                 message:"Some Internal Problem Occur",
             }
         )
-    }
-}
-
-exports.addUserToRoom = async(req,res) => {
-    try {
-        const {targetUser,roomId,token} = req.body;
-        const reqUserId = req.user._id;
-
-        if(!targetUser || !roomId || !token || !reqUserId){
-            return res.status(404).json(
-                {
-                    success:false,
-                    message:"Invalid User",
-                }
-            )
-        }
-
-        const reqUser = await User.findById(reqUserId);
-        const room = await Room.findById(roomId);
-        const targetUserDetails = await User.findById(targetUser);
-
-        if(!reqUser || !room || !targetUserDetails || room.owner!==reqUser._id || targetUserDetails._id===reqUser._id){
-            return res.status(401).json(
-                {
-                    success:false,
-                    message:"Invalid User Request",
-                }
-            )
-        }
-
-        // modify the room
-        const modifiedRoom = await Room.findByIdAndUpdate(room._id,
-            {
-                $push:{
-                    permittedUsers:targetUserDetails._id,
-                }
-            }
-        );
-
-        // add the permissions
-        await Permissions.create(
-            {
-                delete:false,
-                read:true,
-                Room:modifiedRoom._id,
-                User:targetUserDetails._id,
-                write:false,
-            }
-        );
-
-        // permission added and user added to room
-        return res.status(200).json(
-            {
-                success:true,
-                message:"Added To Room Successfully",
-            }
-        );
-
-    } catch (error) {
-        console.error(error);
-        console.log('SOme Internal Problem In Adding User To room');
-        return res.status(500).json(
-            {
-                success:false,
-                message:"Some Internal Problem occurred",
-            }
-        );
     }
 }
 

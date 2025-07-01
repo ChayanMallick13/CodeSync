@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import ShowMembers from './ShowMembers';
 import ChatBox from './ChatBox';
 
-const RightPanelIndex = ({room,socketRef}) => {
+const RightPanelIndex = ({room,socketRef,permissions}) => {
     const [showChat,setshowChat] = useState(false);
   return (
     <div className='w-full h-full bg-slate-900 border-l-[1px]'>
@@ -18,9 +18,15 @@ const RightPanelIndex = ({room,socketRef}) => {
             `}
             >Members</button>
         </div>
-        {(showChat)?(<ChatBox socketRef={socketRef}/>):(<ShowMembers
+        <ChatBox socketRef={socketRef}
+            showChat={showChat}
+        />
+        <ShowMembers
             {...room}
-        />)}
+            thisUsersPermissions={permissions}
+            socket = {socketRef?.current}
+            showChat={showChat}
+        />
     </div>
   )
 }

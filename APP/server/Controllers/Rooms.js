@@ -1,4 +1,4 @@
-const { monacoSuportedExtension, cloudinarySupportedExtensions, languageMapping, getMediaType } = require("../Data/extensionsData");
+const { monacoSuportedExtension, cloudinarySupportedExtensions, languageMapping, getMediaType, mapMediaTypeToCloudinaryResource } = require("../Data/extensionsData");
 const providerTypes = require("../Data/providerTypes");
 const Tokens = require("../Models/Tokens");
 const User = require("../Models/User");
@@ -34,14 +34,7 @@ exports.getGithubFileContent = async(file,token,name,owner,folderId,userId,roomI
         const buff = Buffer.from(fileData,'base64');
 
         const extension = file.path.split('.').at(-1);
-        name = "";
-        const parts = file.path.split('.');
-        for(let x of parts){
-            if(x===extension){
-                break;
-            }
-            name = name + x;
-        }
+        name = file.path;
         
 
         if(monacoSuportedExtension.includes(extension)){
@@ -74,7 +67,7 @@ exports.getGithubFileContent = async(file,token,name,owner,folderId,userId,roomI
         else if(cloudinarySupportedExtensions.includes(extension)){
 
             //upload the file to cloudinary
-            const uploadDetails = await uploadBufferTocloudinary(buff,roomId,name);
+            const uploadDetails = await uploadBufferTocloudinary(buff,'CodeSyncRoomData-'+roomId,name);
 
             // then make a media document and store in db
             const newMedia = await Media.create(
@@ -134,6 +127,7 @@ exports.getFolderContent = async(folderId,owner,name,sha,isroot,branch,token,roo
                         name:subFolderName,
                         owner:userId,
                         Room:roomId,
+                        parentFolder:folderId,
                     }
                 );
 
@@ -307,7 +301,18 @@ exports.getRoomDetails = async(req,res) => {
             }
         );
 
-        roomInfo.permissions = permissions;
+        roomInfo = {...roomInfo.toObject(),permissions};
+        let newPermittedUsersVal = [];
+        for(let user of roomInfo.permittedUsers){
+            const per = await Permissions.findOne({
+                User:user._id,
+                Room:room._id,
+            });
+            newPermittedUsersVal.push({...user,permissions:per});
+        }
+        roomInfo = {...roomInfo,permittedUsers:newPermittedUsersVal}; 
+
+        // console.log(roomInfo,'done');
 
         // return response 
         return res.status(200).json(
@@ -331,31 +336,53 @@ exports.getRoomDetails = async(req,res) => {
     }
 }
 
-exports.deleteFoldersRecursively = async(folderId) => {
+exports.deleteFoldersRecursively = async(folderId,softDelete=true,softDeleteVal=true) => {
     try {
         const folderDetails = await Folder.findById(folderId).populate('Medias').exec();
 
         // delete the files
-        for(let fileId of folderDetails){
-            await File.findByIdAndDelete(fileId);
+        for(let fileId of folderDetails.Files){
+            if(softDelete){
+                await File.findByIdAndUpdate(fileId,{
+                    isDeleted:softDeleteVal,
+                });
+            }
+            else{
+                await File.findByIdAndDelete(fileId);
+            }
         }
 
         // delete the medias
         for(let media of folderDetails.Medias){
-            await removeFileFromCloudinary(media.url);
-            await Media.findByIdAndDelete(media._id);
+            if(softDelete){
+                await Media.findByIdAndUpdate(media,{
+                    isDeleted:softDeleteVal,
+                });
+            }
+            else{
+                await removeFileFromCloudinary(media.url);
+                await Media.findByIdAndDelete(media._id);
+            }
         }
 
         // recursively delete the sub folders
         for(let folderId of folderDetails.Folders){
-            await this.deleteFoldersRecursively(folderId);
+            await this.deleteFoldersRecursively(folderId,softDelete,softDeleteVal);
         }
 
         //delete this folder also
-        await Folder.findByIdAndDelete(folderDetails._id);
+        if(softDelete){
+            await Folder.findByIdAndUpdate(folderDetails._id,{
+                isDeleted:softDeleteVal,
+            })
+        }
+        else{
+            await Folder.findByIdAndDelete(folderDetails._id);
+        }
 
     } catch (error) {
         console.log('Some Problem In Deleting Folder');
+        console.error(error);
     }
 }
 
@@ -364,6 +391,8 @@ exports.deleteRoom = async(req,res) => {
     try {
         const {roomId} = req.body;
         const user = req.user;
+
+        console.log(roomId,3);
         
         if(!roomId || !user){
             return res.status(400).json(
@@ -374,11 +403,13 @@ exports.deleteRoom = async(req,res) => {
             )
         }
 
+        console.log(roomId,1);
+
         const reqUser = await User.findById(user._id);
 
         const room = await RoomModel.findById(roomId);
 
-        if(!reqUser || !room || reqUser._id!==room.owner){
+        if(!reqUser || !room || !reqUser._id.equals(room.owner)){
             return res.status(404).json(
                 {
                     success:false,
@@ -386,6 +417,8 @@ exports.deleteRoom = async(req,res) => {
                 }
             )
         }
+
+        console.log(roomId,2);
 
         //delete the chat messages
         for(let msgId of room.messages){
@@ -405,11 +438,26 @@ exports.deleteRoom = async(req,res) => {
             await Permissions.findByIdAndDelete(permission._id);
         }
 
-        // delete the folders recursivesly
-        await this.deleteFoldersRecursively(room.rootFolder);
+        // delete all medias
+        const medias = await Media.find({
+            Room:roomId,
+        });
+        for(let media of medias){
+            await removeFileFromCloudinary(media.url,mapMediaTypeToCloudinaryResource(media.mediaType));
+            await Media.findByIdAndDelete(media._id);
+        }
 
-        // delete this room also
-        await RoomModel.findByIdAndDelete(room._id);
+        // delete all files
+        await File.deleteMany({
+            Room:roomId,
+        });
+
+        // delete all folders 
+        await Folder.deleteMany({
+            Room:roomId,
+        });
+
+        await RoomModel.findByIdAndDelete(roomId);
 
 
         // all done
@@ -435,7 +483,7 @@ exports.deleteRoom = async(req,res) => {
 
 exports.isUserActionAllowed = async(room,reqUser,action,item) => {
     let isActionAllowed = false;
-    if(item.owner===reqUser._id){
+    if(reqUser._id.equals(room.owner)){
         isActionAllowed = true;
     }
     else{
@@ -515,7 +563,7 @@ exports.joinARoom = async(req,res) => {
             });
         }
 
-        if((!(room.owner!==reqUser._id)) && (!room.permittedUsers.includes(reqUser._id))){
+        if( (!(room.owner.equals(reqUser._id))) && (!room.permittedUsers.includes(reqUser._id))){
             if(room.joinCode!==joinCode){
                 return res.status(401).json({
                   success: false,
@@ -532,9 +580,6 @@ exports.joinARoom = async(req,res) => {
             const newPermissions = await Permissions.create(
                 {
                     User:reqUser._id,
-                    delete:true,
-                    read:true,
-                    write:true,
                     Room:room._id,
                 }
             );

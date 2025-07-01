@@ -14,6 +14,7 @@ import PreferenceIndex from './Components/Core/Dashboard/Preference/PrefernceInd
 import ResetPassword from "./Pages/ResetPassword";
 import ResetMailSentPage from "./Pages/ResetMailSentPage";
 import EditorPage from "./Pages/EditorPage";
+import DemoEditor from "./Pages/DemoEditor";
 
 function App() {
   const { user } = useSelector((state) => state.profile);
@@ -52,6 +53,8 @@ function App() {
             </Route>
           </>
         }
+
+        <Route path="/demo/:id" element={<DemoEditor/>}/>
 
         <Route path="*" element={<PageNotFound />} />
       </Routes>

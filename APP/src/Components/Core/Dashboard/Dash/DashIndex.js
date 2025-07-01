@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { FaPlus } from 'react-icons/fa';
 import { RiGitRepositoryFill } from "react-icons/ri";
 import { FaPeopleGroup } from "react-icons/fa6";
@@ -12,10 +12,11 @@ import { getAllUsersRooms } from '../../../../Services/Operations/Room_Apis';
 import RoomCard from './RoomCard';
 
 const DashIndex = () => {
-  const {user} = useSelector(state => state.profile);
+  const {user,userRooms} = useSelector(state => state.profile);
   const [showUserRepos,setShowUserRepos] = useState(false);
   const [content,setContent] = useState([]);
   const [loader,setLoader] = useState(false);
+  const dispatch = useDispatch();
   let isGithubVerified = user.accountType.includes(providerTypes.GITHUB);
   useEffect(
     () => {
@@ -23,7 +24,7 @@ const DashIndex = () => {
         getAllUserRepos(setContent,setLoader);
       }
       else{
-        getAllUsersRooms(setContent,setLoader);
+        getAllUsersRooms(setLoader,dispatch);
       }
     },[showUserRepos]
   )
@@ -111,7 +112,7 @@ const DashIndex = () => {
           </div>
         }
         {
-          (!showUserRepos && !loader)&&content.map(
+          (!showUserRepos && !loader)&&userRooms.map(
             (room,key) => {
               console.log('Room',room);
               return <RoomCard
@@ -123,7 +124,7 @@ const DashIndex = () => {
           
         }
         {
-          !loader && (content.length===0)&&<div
+          !loader && (userRooms.length===0)&&<div
           className='text-3xl text-center w-full mt-8 font-extrabold'
           >
             {(showUserRepos)?('No Repositorys Made Till Now'):('No Rooms To Show')}

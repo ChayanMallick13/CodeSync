@@ -7,7 +7,7 @@ import { FaDotCircle } from "react-icons/fa";
 import { formatToAMPM } from "../../../Utils/AMPMDateFormatter";
 import { GoDotFill } from "react-icons/go";
 
-const ChatBox = ({ socketRef }) => {
+const ChatBox = ({ socketRef ,showChat}) => {
   const { user } = useSelector((state) => state.profile);
   const [chats, setChats] = useState([]);
   const { id } = useParams();
@@ -39,7 +39,9 @@ const ChatBox = ({ socketRef }) => {
     getAllMessages(setChats, body);
   }, []);
   return (
-    <div className="w-full h-full overflow-hidden relative">
+    <div className={`w-full h-full overflow-hidden relative
+    ${showChat?('block'):('hidden')}
+    `}>
       <div className="overflow-y-auto overflow-x-hidden mb-2 h-[calc(100%-130px)]">
         {chats.map((msg, key) => {
           return (
@@ -75,6 +77,11 @@ const ChatBox = ({ socketRef }) => {
           value={msg}
           onChange={(event) => {
             setMsg(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if(event.key==='Enter'){
+              sendMessageHandler();
+            }
           }}
         />
         <button

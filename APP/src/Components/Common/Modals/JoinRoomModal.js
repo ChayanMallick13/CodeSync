@@ -1,17 +1,19 @@
 import React, { useState } from 'react'
-import { FaArrowLeft, FaArrowRight, FaLink, FaLock } from 'react-icons/fa';
+import { FaArrowRight, FaLink, FaLock } from 'react-icons/fa';
 import { joinRoom } from '../../../Services/Operations/Room_Apis';
+import { useDispatch } from 'react-redux';
 
 const JoinRoomModal = ({setShowMadal}) => {
     const [roomId,setRoomId] = useState('');
     const [joinCode,setJoinCode] = useState('');
     const [disableBtn,setdisableBtn] = useState(false);
+    const dispatch = useDispatch();
     function handleJoinRoom(){
         const body = {
             roomId,
             joinCode,
         }
-        joinRoom(body,setdisableBtn);
+        joinRoom(body,setdisableBtn,setShowMadal,dispatch);
     }
   return (
     <div className='text-white fixed bg-slate-500/10 top-0 left-0 right-0 bottom-0 z-30

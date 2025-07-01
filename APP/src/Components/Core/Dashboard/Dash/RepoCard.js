@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { FaAd, FaFolder, FaGlobe, FaLock, FaPlus } from 'react-icons/fa'
 import { timeAgo } from '../../../../Utils/timeAgoFunc'
 import { createRoomFromRepo } from '../../../../Services/Operations/Room_Apis';
+import { languageToDeviconMap } from '../../../../Utils/allLanguages';
 
 const RepoCard = ({id,name,description,isPrivate,html_url,updated_at,language,default_branch,owner}) => {
     const defDes = '';
@@ -13,6 +14,17 @@ const RepoCard = ({id,name,description,isPrivate,html_url,updated_at,language,de
             description,
         };
         await createRoomFromRepo(body,setDisableBtn);
+    }
+    function getLanguageIconUrl(language) {
+        language = language.toLowerCase();
+      const deviconName = languageToDeviconMap[language];
+    
+      if (deviconName) {
+        return `https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/${deviconName}/${deviconName}-original.svg`;
+      }
+    
+      // fallback to iconify (only lowercase works here)
+      return null;
     }
     const [disableBtn,setDisableBtn] = useState(false);
   return (
@@ -37,7 +49,7 @@ const RepoCard = ({id,name,description,isPrivate,html_url,updated_at,language,de
                 language&&<div
                 className='flex gap-x-3 items-center'
                 >
-                <img src={`https://cdn.simpleicons.org/${language}`} alt={language}
+                <img src={`${getLanguageIconUrl(language)}`} alt={language}
                     className='h-[15px] w-[15px]'
                 />
                 <span>{language}</span>

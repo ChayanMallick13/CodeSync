@@ -1,21 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {Editor} from '@monaco-editor/react'
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
-import Loader from '../../../Pages/Loader'
-import { setIsFileSynced, trackFileChange } from '../../../Reducer/Slices/EditorSlice';
-import toast from 'react-hot-toast';
+import Loader from '../Pages/Loader'
+import { useLocation, useParams } from 'react-router-dom';
+import { FaArrowRight, FaCopy } from 'react-icons/fa';
+import { copyToClipBoard } from '../Utils/copyToClipBoard';
 
-const MonacoEditor = ({room,permissions}) => {
-  const {activeObject} = useSelector(state => state.editor);
-  const {user} = useSelector(state => state.profile);
-  const userColor = room.activeUsers.filter(ele => ele.user._id ===user._id).at(0).cursorColor;
-  const [loader,setLoader] = useState(true);
-  const {fontSize,theme} = useSelector(state => state.preference);
-  const dispatch = useDispatch();
-  const editorContentRef = useRef(activeObject?.content);
+const DemoEditor = () => {
+  let {user} = useSelector(state => state.profile);
+  if(!user){
+    user = {
+        firstName:"John",
+        lastName:`${Math.floor((Math.random()*10000))}`
+    }
+  }
+  const userColor = `rgb(${Math.floor(Math.random() * 55 + 200)},
+  ${Math.floor(Math.random() * 55 + 200)},${Math.floor(Math.random() * 55 + 200)})`;
+
+  const [loader,setLoader] = useState(false);
+  const {fontSize,theme,defaultLanguage} = useSelector(state => state.preference);
+  const {id} = useParams();
 
   const editorRef = useRef(null);
   const decorationsRef = useRef(new Map());
@@ -29,24 +36,6 @@ const MonacoEditor = ({room,permissions}) => {
     providerRef.current?.disconnect();
   }
 
-  useEffect(() => {
-  if (editorRef.current) {
-    editorRef.current.updateOptions({ readOnly: activeObject?.isDeleted });
-  }
-}, [activeObject?.isDeleted]);
-
-  useEffect(()=>{
-      if (editorRef.current) {
-        editorRef.current.updateOptions({ readOnly: !(permissions?.write || permissions?.delete) });
-      }
-      // console.log(permissions,'permi');
-  },[permissions])
-
-  useEffect(
-    () => {
-      dispatch(setIsFileSynced(activeObject.content===editorContentRef.current));
-    },[activeObject.content,editorContentRef.current]
-  )
 
 
 
@@ -60,16 +49,13 @@ const MonacoEditor = ({room,permissions}) => {
         // initialise the provider
         const provider = new WebsocketProvider(
           `${process.env.REACT_APP_YJS_SERER}`,
-          activeObject._id,
+          id,
           ydoc,
         );
         const ytext = ydoc.getText('monaco');
 
         // ✅ Set default content only if Yjs is empty (first time)
         provider.on('synced', (isSynced) => {
-          if (isSynced && ytext.toString().length === 0 && activeObject?.content) {
-            ytext.insert(0, activeObject.content);
-          }
           setLoader(false);
         });
 
@@ -98,7 +84,7 @@ const MonacoEditor = ({room,permissions}) => {
           window.removeEventListener('beforeunload',handleUnMountCleanUp);
         }
         
-    },[activeObject?._id]
+    },[id]
   )
 
   // for the cursor things etc 
@@ -107,10 +93,6 @@ const MonacoEditor = ({room,permissions}) => {
     const provider = providerRef.current;
     const ytext = yTextRef.current;
 
-    editor.onDidAttemptReadOnlyEdit((e) => {
-      if(activeObject?.isDeleted)
-        toast.error('This File is Deleted Retrive it to Edit');
-    });
 
     //binding with monaco
     const monacoBinding = new MonacoBinding(
@@ -210,27 +192,32 @@ const MonacoEditor = ({room,permissions}) => {
 
   return (
     <div className='h-full w-full'>
+        <div className='text-white bg-slate-800 flex justify-around p-3'>
+            <p className='font-bold bg-gradient-to-r from-teal-400 to-yellow-200 
+            bg-clip-text text-transparent text-lg'>You Are {user.firstName} {user.lastName}</p>
+            <p className='text-blue-500 font-bold flex items-center gap-x-2'>Share This Link To Collaborate <FaArrowRight/></p>
+            <div className='flex items-center gap-x-2 text-slate-400 font-extrabold'>
+                <p>
+                {window.location.href}
+            </p>
+            <button
+            onClick={()=>{copyToClipBoard(window.location.href,navigator)}}
+            >
+                <FaCopy/>
+            </button>
+            </div>
+        </div>
         <Editor
-        key={`${activeObject._id}`} // 🔑 Important: force remount on tab change
-        language={activeObject.language || 'javascript'}
+        key={`${id}`} // 🔑 Important: force remount on tab change
+        language={defaultLanguage}
         theme={(theme==='dark')?('vs-dark'):('vs-light')}
         options={{
           fontSize: fontSize, // Set editor font size
-          automaticLayout: true,
-          readOnly:((activeObject?.isDeleted )|| (!(permissions?.write || permissions?.delete)) ) ,            
+          automaticLayout: true,          
           fontFamily: 'Fira Code',   // Custom font family (if available)
           fontLigatures: true,       // Enable ligatures (for fonts like Fira Code)
           lineHeight: 24,            // Line height
           letterSpacing: 0.5, 
-        }}
-        onChange={(newValue) => {
-          const payload = {
-            roomId:room._id,
-            item:activeObject,
-            content:newValue,
-          }
-          dispatch(trackFileChange(payload));
-          editorContentRef.current = newValue;
         }}
         onMount={handleEditorMount}
       />
@@ -238,4 +225,4 @@ const MonacoEditor = ({room,permissions}) => {
   )
 }
 
-export default MonacoEditor
+export default DemoEditor

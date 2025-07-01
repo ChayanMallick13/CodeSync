@@ -6,7 +6,8 @@ const initialState = {
     activeObject:null,
     undoStack:[],
     redoStack:[],
-    isFileChanged:false,
+    chnagedFiles:[],
+    isFileSynced:false,
 };
 
 const editorSlice = createSlice(
@@ -15,19 +16,26 @@ const editorSlice = createSlice(
         initialState,
         reducers:{
             addActiveObject(state,action){
-                const alreadyPresent = state.activeObjects.filter(ele => ele._id===action.payload._id);
-                // console.log(alreadyPresent);
-                if(alreadyPresent.length){
-                    return;
+                let added = false;
+                let newState = state.activeObjects.map(ele => {
+                    if(ele._id!==action.payload._id){
+                        return ele;
+                    }
+                    else{
+                        added = true;
+                        return action.payload;
+                    }
+                });
+                if(!added){
+                    newState.push(action.payload);
                 }
-                state.activeObjects.push(action.payload);
+                console.log('in slice new array ',newState);
+                state.activeObjects= newState;
             },
             removeActiveObject(state,action){
 
                 state.activeObjects = state.activeObjects.filter(ele => ele._id!==action.payload);
                 
-                // console.log(JSON.parse(JSON.stringify(state.activeObject)),action.payload);
-                // console.log(state.activeObjects.length);
                 if(state.activeObject?._id===action.payload){
                     if(state.activeObjects.length>0){
                         // console.log('pp');
@@ -38,20 +46,45 @@ const editorSlice = createSlice(
                         state.activeObject = null;
                     }
                 }
-            //    console.log(JSON.parse(JSON.stringify(state.activeObject)),action.payload);
             },
             setActiveObject(state,action){
+                console.log('settingActiveObject',action.payload);
                 state.activeObject = action.payload;
             },
             unsetActiveObject(state){
                 state.activeObject = null;
             },
-            setFileChanged(state,action){
-                state.isFileChanged = action.payload;
+            resetActiveObjectsSet(state){
+                state.activeObject= null;
+                state.activeObjects = [];
+            },
+            trackFileChange(state,action){
+                const {item,content,roomId} = action.payload;
+                const val = state.chnagedFiles.filter(ele => ele.fileId!==item._id);
+                if(item.content!==content){
+                    val.push({
+                        fileId:item._id,
+                        roomId,
+                        content,
+                    });
+                }
+                console.log(val);
+                state.chnagedFiles = val;
+            },
+            setIsFileSynced(state,action){
+                state.isFileSynced = action.payload;
+            },
+            resetRoom(state){
+                state.activeObject = null;
+                state.activeObjects = [];
+                state.chnagedFiles = [];
+                state.isFileSynced = true;
             }
         }
     }
 )
 
-export const {addActiveObject,removeActiveObject,setActiveObject,unsetActiveObject,setFileChanged} = editorSlice.actions;
+export const {addActiveObject,removeActiveObject,setActiveObject,unsetActiveObject
+    ,resetActiveObjectsSet,trackFileChange,setIsFileSynced,resetRoom
+} = editorSlice.actions;
 export default editorSlice.reducer;

@@ -32,6 +32,10 @@ const FileSchema = new mongoose.Schema(
         createdAt:{
             type:Date,
             default:Date.now,
+        },
+        isDeleted:{
+            type:Boolean,
+            default:false,
         }
     }
 );

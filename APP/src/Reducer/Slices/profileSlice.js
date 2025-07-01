@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = ({
     user:localStorage.getItem('user')?JSON.parse(localStorage.getItem('user')):null,
+    userRooms:[],
 })
 
 const profileSlice = createSlice({
@@ -16,9 +17,12 @@ const profileSlice = createSlice({
         resetProfile(state){
             state.user = null;
             localStorage.removeItem('user');
+        },
+        setUserRooms(state,action){
+            state.userRooms = action.payload;
         }
     }
 })
 
-export const {setUser,resetProfile} = profileSlice.actions;
+export const {setUser,resetProfile,setUserRooms} = profileSlice.actions;
 export default profileSlice.reducer;

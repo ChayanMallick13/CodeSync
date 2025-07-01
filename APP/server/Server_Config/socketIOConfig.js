@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const { handleUserRoomJoin, handleUserRoomLeave } = require("../Socket_Controllers/Rooms");
+const { handleUserRoomJoin, handleUserRoomLeave, upDateOldData } = require("../Socket_Controllers/Rooms");
 const { sendMessageHandler } = require("../Socket_Controllers/chat_Msg");
 require("dotenv").config();
 
@@ -25,6 +25,14 @@ module.exports = function setUpSocketIo(server) {
 
         socket.on('sendMessage',(data)=>{
             sendMessageHandler(data,io);
+        })
+
+        socket.on('fileChnaged',(data)=>{
+            upDateOldData(data,io);
+        })
+
+        socket.on('userPermissionChange',(data) => {
+            io.to(data.roomId).emit('updateRoomPermissions',data);
         })
 
         socket.on('disconnect',() => {

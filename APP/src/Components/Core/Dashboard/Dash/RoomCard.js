@@ -1,12 +1,89 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState,useRef} from "react";
+import toast from "react-hot-toast";
 import { FaCrown, FaEye, FaPen } from "react-icons/fa";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { deleteARoom } from "../../../../Services/Operations/Room_Apis";
+import { setUser } from "../../../../Reducer/Slices/profileSlice";
+import { io } from "socket.io-client";
 
 const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
-  console.log(permissions,'permi');
+  // console.log(permissions,'permi');
+  const [confirmDelete,setConfirmDelete] = useState(false);
   const { user } = useSelector((state) => state.profile);
-  const activeUsersList = activeUsers?.map(ele => ele?.user?.image) || [];
+  const [disableBtn,setDisableBtn] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const socketRef = useRef();
+  const [activeUsersStat,setActiveUsersState] = useState(activeUsers);
+  const [activeUsersList,setactiveUsersList] = useState(activeUsers?.map(ele => ele?.user?.image) || []);
+
+  useEffect(
+    () => {
+        setactiveUsersList(activeUsersStat?.map(ele => ele?.user?.image) || []);
+    },[activeUsersStat]
+  )
+
+  function handleRoomDelete(){
+    if(!confirmDelete){
+      toast.error('Check The CheckBox to Confirm Deletion');
+      return;
+    }
+    if(activeUsersStat?.length!==0){
+      toast.error('Users Are Using The Room Try After SomeTime');
+      return;
+    }
+    deleteARoom({roomId:_id},setDisableBtn,dispatch);
+  }
+
+  function handleLeaveRoom() {
+    socketRef.current?.disconnect();
+  }
+  function activeUsersChangeHandler(data) {
+    const {room} = data;
+    setActiveUsersState(room.activeUsers);
+  }
+
+  useEffect(
+    () => {
+        const socket = io(process.env.REACT_APP_SOCKET_IO_BACKEND);
+        socketRef.current = socket;
+
+        window.addEventListener('beforeunload',handleLeaveRoom);
+
+        socket.on('connect',() => {
+            // toast.success('Room Socket Connection Successfull');
+            console.log('Socket Io Connection Successfull');
+            const data = {isDash:true,roomId:_id}
+            // console.log(data);
+            socket.emit('connect_To_Room',data);
+        })
+
+        socket.on('connect_error',()=>{
+            // toast.error('Some Error in Connecting You to Room');
+            console.log('Some Error in cnnection');
+        })
+
+        socket.on('user-join-event',activeUsersChangeHandler);
+
+        socket.on('user-leave-event',activeUsersChangeHandler);
+
+
+        socket.on("disconnect", () => {
+            // toast.success('Disconnected from Room');
+            console.log('Socket Io DisConnection Successfull');
+        });
+
+
+        return () => {
+            handleLeaveRoom();
+            socket.off('user-join-event',activeUsersChangeHandler);
+            socket.off('user-leave-event',activeUsersChangeHandler);
+            window.removeEventListener('beforeunload',handleLeaveRoom);
+        }
+    },[_id]
+  )
+
   return (
     <div className="bg-slate-900 border-[1px] border-slate-400/50 p-4 w-[450px] h-[290px] flex flex-col
     justify-between rounded-lg">
@@ -66,14 +143,36 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
         }
       </div>
       }
-      <Link
+      <button
       className="bg-slate-500 p-2 font-extrabold rounded-xl
       transition-all duration-200 hover:bg-slate-600 text-center
       "
-      to={`/room/${_id}`}
+      onClick={()=>{
+        setUser({...user,permissions});
+        navigate(`/room/${_id}`);
+      }}
       >
         Join Room
-      </Link>
+      </button>
+      {
+        (user._id === owner)&&<div className="text-xl flex items-center gap-x-3">
+          <div class="checkbox-wrapper-39">
+            <label>
+              <input type="checkbox"
+                checked={confirmDelete}
+                onChange={(e)=>{setConfirmDelete(e.target.checked)}}
+              />
+              <span class="checkbox"></span>
+            </label>
+          </div>
+          <button className="font-extrabold text-red-600"
+          onClick={handleRoomDelete}
+          disabled={disableBtn}
+          >
+            Delete This Room
+          </button>
+        </div>
+      }
     </div>
   );
 };

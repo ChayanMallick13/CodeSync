@@ -37,6 +37,14 @@ const FolderSchema = new mongoose.Schema(
             type:mongoose.Schema.Types.ObjectId,
             ref:"Room",
         },
+        parentFolder:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Folder",
+        },
+        isDeleted:{
+            type:Boolean,
+            default:false,
+        }
     }
 );
 

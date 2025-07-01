@@ -22,9 +22,18 @@ export const roomLinks = {
     CREATE_ROOM_FROM_REPO:BASE_URL+'/room/createroom-fromRepo',
     GET_ALL_USER_ROOMS:BASE_URL+'/room/getAllUserRooms',
     GET_ROOM_INFO:BASE_URL+'/room/getRoomInfo',
-    GET_FOLDER_INFO:BASE_URL+'/room/folder/getDetails',
+    GET_ITEM_INFO:BASE_URL+'/room/folder/getDetails',
     JOIN_A_ROOM_API:BASE_URL+'/room/joinRoom',
     GET_ALL_MESSAGES:BASE_URL+'/room/getAllMsgs',
+    RENAME_A_FILE:BASE_URL+'/room/file/rename',
+    RENAME_A_FOLDER:BASE_URL+'/room/folder/rename',
+    RENAME_A_MEDIA:BASE_URL+'/room/media/rename',
+    DELETE_A_FILE:BASE_URL+'/room/file/delete',
+    DELETE_A_MEDIA:BASE_URL+'/room/media/delete',
+    DELETE_A_FOLDER:BASE_URL+'/room/folder/delete',
+    DELETE_A_ROOM:BASE_URL+'/room/delete',
+    CREATE_A_ITEM:BASE_URL+'/room/createItem',
+    CHANGE_USER_PERMISSIONS:BASE_URL+'/room/changePermissions',
 }
 
 export const ratingLinks = {

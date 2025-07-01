@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import { apiConnector } from "../apiConnector"
 import { roomLinks } from "../apis"
+import { setUserRooms } from "../../Reducer/Slices/profileSlice";
 
 export const createRoomFromRepo = async(body,setDisableBtn) => {
     setDisableBtn(true);
@@ -18,18 +19,20 @@ export const createRoomFromRepo = async(body,setDisableBtn) => {
     toast.dismiss(tid);
 }
 
-export const getAllUsersRooms = async(setContent,setLoader) => {
-    setLoader(true);
+export const getAllUsersRooms = async(setLoader,dispatch) => {
+    if(setLoader)
+        setLoader(true);
     try {
         const res = await apiConnector('GET',roomLinks.GET_ALL_USER_ROOMS);
-        setContent(res.data.allRooms);
+        dispatch(setUserRooms(res.data.allRooms));
     } catch (error) {
         toast.error('Some Error in Fetching User Rooms');
     }
-    setLoader(false);
+    if(setLoader)
+        setLoader(false);
 }
 
-export const getRoomInfo = async(setRoom,body) => {
+export const getRoomInfo = async(setRoom,body,setPermissions,user) => {
     const tid = toast.loading('Working on Your Request ...');
     try {
         const res = await apiConnector('POST',roomLinks.GET_ROOM_INFO,body);
@@ -37,6 +40,16 @@ export const getRoomInfo = async(setRoom,body) => {
             throw new Error("Some Error");
         }
         setRoom(res.data.roomInfo);
+        const room = res.data.roomInfo;
+        console.log('equal',room,user._id);
+        if(room.owner._id===user._id){
+            setPermissions({read:true,write:true,delete:true});
+            // console.log('Call 1');
+        }
+        else{
+            setPermissions(res.data.roomInfo.permissions);
+            // console.log('Call 2');
+        }
         toast.success('Data Fetched Successfully');
     } catch (error) {
         toast.error('Some Error occurred while Fetching Room Data');
@@ -44,16 +57,23 @@ export const getRoomInfo = async(setRoom,body) => {
     toast.dismiss(tid);
 }
 
-export const getFolderDetails = async(folderId,roomId,setValue) => {
+export const getItemDetails = async(itemId,roomId,setValue,type,setfiles,setRecFolders,setMedias) => {
     try {
         const body = {
-            folderId,
+            itemId,
             roomId,
+            type,
         };
-        const res = await apiConnector('POST',roomLinks.GET_FOLDER_INFO,body);
-        console.log(res.data);
+        const res = await apiConnector('POST',roomLinks.GET_ITEM_INFO,body);
+        // console.log(res.data);
         if(res.data.success){
-            setValue(res.data.folder);
+            setValue(res.data.item);
+            const data = res.data.item;
+            if(type==='folder'){
+                setfiles(data?.Files);
+                setRecFolders(data?.Folders);
+                setMedias(data?.Medias);
+            }
         }
         else{
             throw new Error("Error in Folder Viewer");
@@ -63,13 +83,15 @@ export const getFolderDetails = async(folderId,roomId,setValue) => {
     }
 }
 
-export const joinRoom = async(body,setdisableBtn) => {
+export const joinRoom = async(body,setdisableBtn,setShowMadal,dispatch) => {
     const tid = toast.loading('Loading ...');
     setdisableBtn(true);
     try {
         const res = await apiConnector('POST',roomLinks.JOIN_A_ROOM_API,body);
         if(res.data.success){
             toast.success('You Have Sucessfully Joined the room');
+            setShowMadal(false);
+            await getAllUsersRooms(null,dispatch);
         }
         else{
             throw new Error("Some Error Occurred");
@@ -91,4 +113,125 @@ export const getAllMessages = async(setMessages,body) => {
     } catch (error) {
         console.log('Some Error in Getting Room Messages');
     }
+}
+
+export const renameItem = async(body,closeModal,disableBtn,type) => {
+    const tid = toast.loading('Loading ...');
+    disableBtn(true);
+    let success = true;
+    try {
+        let link = '';
+        if(type==='file'){
+            link = roomLinks.RENAME_A_FILE;
+        }
+        else if(type==='folder'){
+            link = roomLinks.RENAME_A_FOLDER;
+        }
+        else{
+            link = roomLinks.RENAME_A_MEDIA;
+        }
+        const res = await apiConnector('POST',link,body);
+        if(res.data.success){
+            toast.success('File Renamed Sucessully');
+        }
+    } catch (error) {
+        toast.error('Some Error in Renaming the file');
+        success = false;
+    }
+    toast.dismiss(tid);
+    closeModal(false);
+    disableBtn(false);
+    return success;
+}
+
+export const deleteAItem = async(body,closeModal,disableBtn,type) => {
+    const tid = toast.loading('Loading ...');
+    disableBtn(true);
+    let success = true;
+    try {
+        let link = '';
+        if(type==='file'){
+            link = roomLinks.DELETE_A_FILE;
+        }
+        else if(type==='folder'){
+            link = roomLinks.DELETE_A_FOLDER;
+        }
+        else{
+            link = roomLinks.DELETE_A_MEDIA;
+        }
+        const res = await apiConnector('POST',link,body);
+        if(res.data.success){
+            toast.success('File Deleted Sucessully');
+        }
+    } catch (error) {
+        toast.error('Some Error in Deleting the file');
+        success = false;
+    }
+    toast.dismiss(tid);
+    closeModal(false);
+    disableBtn(false);
+    return success;
+}
+
+export const deleteARoom = async(body,setdisableBtn,dispatch) => {
+    const tid = toast.loading('Loading ...');
+    setdisableBtn(true);
+    try {
+        const res = await apiConnector('POST',roomLinks.DELETE_A_ROOM,body);
+        if(res.data.success){
+            toast.success('Room is Deleted Successfully');
+            await getAllUsersRooms(null,dispatch);
+        }
+        else{
+            throw new Error("Some Error Occurred");
+        }
+    } catch (error) {
+        toast.error('Some Error Occurred in Deleting the room');
+    }
+    setdisableBtn(false);
+    toast.dismiss(tid);
+}
+
+export const addAItem = async(body,setDisableBtn,addObjectToActive,type) => {
+    let success = true;
+    const tid = toast.loading('Loading ...');
+    setDisableBtn(true);
+    try {
+        const res = await apiConnector('POST',roomLinks.CREATE_A_ITEM,body);
+        if(!res.data.success){
+            throw new Error("Some Error Occurred");
+        }
+        if(type!=='folder'){
+            addObjectToActive(type==='file',res.data.item);
+        }
+        toast.success('Item Created Successfully');
+    } catch (error) {
+        success = false;
+        toast.error('Some Error in adding the file');
+    }
+    setDisableBtn(false);
+    toast.dismiss(tid);
+    return success;
+}
+
+export const changePermissions = async(body,setDisableBtn,setCloseModal) => {
+    let data = {
+        success:false
+    };
+    const tid = toast.loading('Working On Your Request , Hold Still ...');
+    setDisableBtn(true);
+    try {
+        const res = await apiConnector('POST',roomLinks.CHANGE_USER_PERMISSIONS,body);
+        if(!res.data.success){
+            throw new Error("Some Error in Chnage Permissions");
+        }
+        setCloseModal(false);
+        data = res.data;
+
+    } catch (error) {
+        
+    }
+    setDisableBtn(false);
+    toast.dismiss(tid);
+    return data;
 }

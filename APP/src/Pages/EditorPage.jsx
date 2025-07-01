@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Loader from "./Loader";
 import { getRoomInfo } from "../Services/Operations/Room_Apis";
 import { Navigate, useParams } from "react-router-dom";
@@ -10,45 +10,84 @@ import toast from "react-hot-toast";
 import FIleExplorer from "../Components/Editor/FIleExplorer";
 import RightPanelIndex from "../Components/Editor/RightPanel/RightPanelIndex";
 import ShareRoomCode from "../Components/Common/Modals/ShareRoomCode";
-import JoinRoomModal from "../Components/Common/Modals/JoinRoomModal";
 import EditorIndex from "../Components/Editor/MonacoEditor/EditorIndex";
+import { resetRoom } from "../Reducer/Slices/EditorSlice";
 
 const EditorPage = () => {
   const { user } = useSelector((state) => state.profile);
   const socketRef = useRef(null);
   const [showRoomDetails,setShowRoomDetails] = useState(false);
-
+  const [permissions,setPermissions] = useState(null);
+  const {chnagedFiles} = useSelector(state => state.editor); 
+  const chnagedFilesRef = useRef(chnagedFiles);
+  const dispatch = useDispatch();
+  const roomRef = useRef(null);
   const [room, setRoom] = useState(null);
+
+  useEffect(
+    () => {
+      chnagedFilesRef.current = chnagedFiles;
+    },[chnagedFiles]
+  )
+
+  useEffect(
+    () => {
+      roomRef.current = room;
+    },[room]
+  )
+
   const { id } = useParams();
 
   function handleLeaveRoom(){
     const data = {
         roomId:id,
         userId:user._id,
-    }
-    console.log('Leave Call -> ',user._id);
+        changedFiles:chnagedFilesRef.current,
+      }
+    console.log('The Value is -> ',chnagedFilesRef.current);
     socketRef.current?.emit('disconnect_from_room',data);
     socketRef.current?.disconnect();
+    dispatch(resetRoom());
+    
   }
 
   function newUserJoinGandler(data){
     const {newUser,room} = data;
-    setRoom(room);
+    setRoom(prev => ({...prev,activeUsers:room.activeUsers}));
     toast.success(`${newUser} Joined The Session`);
   }
 
   function userLeaveHandler(data){
     const {newUser,room} = data;
-    setRoom(room);
+    setRoom(prev => ({...prev,activeUsers:room.activeUsers}));
     toast.error(`${newUser} has Left The Session`);
+  }
+
+  function handlePermissionUpdate(data){
+    const {item,targetName,userName,targetId,newPos,oldPos} = data;
+    const arr = roomRef.current?.permittedUsers?.map(ele => {
+      if(user._id===targetId){
+        setPermissions(item);
+      }
+      if(ele._id!==targetId){
+        return ele;
+      }
+      else{
+        return {...ele,permissions:item}
+      }
+    })
+    setRoom(prev => ({...prev,permittedUsers:arr}));
+    toast.success(`${userName} updated ${targetName} role from ${oldPos} to ${newPos}`);
   }
 
   useEffect(() => {
     const body = {
       roomId: id,
     };
-    getRoomInfo(setRoom,body);
+    getRoomInfo(setRoom,body,setPermissions,user);
   }, []);
+
+
 
   // for y web socket server and socket io
   useEffect(
@@ -78,14 +117,18 @@ const EditorPage = () => {
 
         socket.on('user-leave-event',userLeaveHandler);
 
+        socket.on('updateRoomPermissions',handlePermissionUpdate);
+
         socket.on("disconnect", () => {
             // toast.success('Disconnected from Room');
             console.log('Socket Io DisConnection Successfull');
         });
 
+
         return () => {
             socket.off('user-join-event',newUserJoinGandler);
             socket.off('user-leave-event',userLeaveHandler);
+            socket.off('updateRoomPermissions',handlePermissionUpdate);
             handleLeaveRoom();
             window.removeEventListener('beforeunload',handleLeaveRoom);
         }
@@ -115,17 +158,20 @@ const EditorPage = () => {
         <Panel defaultSize={17} minSize={0} className="bg-yellow-100 h-[calc(100vh-70px)]">
           <FIleExplorer
             {...room?.rootFolder}
+            permissions={permissions}
+            socketRef = {socketRef}
           />
         </Panel>
         <PanelResizeHandle />
         <Panel minSize={50} className="bg-green-100 h-[calc(100vh-70px)]">
-          <EditorIndex room={room}/>
+          <EditorIndex room={room} permissions={permissions}/>
         </Panel>
         <PanelResizeHandle />
         <Panel defaultSize={15} minSize={0} className="bg-red-100 h-[calc(100vh-70px)]">
           <RightPanelIndex
             room={room}
             socketRef = {socketRef}
+            permissions={permissions}
           />
         </Panel>
       </PanelGroup>

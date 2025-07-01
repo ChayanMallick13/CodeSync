@@ -15,14 +15,17 @@ const PermissionsSchema = new mongoose.Schema(
         read:{
             type:Boolean,
             required:true,
+            default:true,
         },
         write:{
             type:Boolean,
             required:true,
+            default:false,
         },
         delete:{
             type:Boolean,
             required:true,
+            default:false,
         },
     }
 );

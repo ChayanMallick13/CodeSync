@@ -140,3 +140,18 @@ exports.getMediaType = (extension) => {
   }
 ;
 }
+
+exports.mapMediaTypeToCloudinaryResource = (mediaType) => {
+  switch (mediaType) {
+    case 'image':
+      return 'image';
+    case 'audio':
+    case 'video':
+      // Both audio and video are usually uploaded under 'video' in Cloudinary
+      return 'video';
+    case 'docs':
+    case 'pdf':
+    default:
+      return 'raw'; // PDFs and docs go under 'raw'
+  }
+};

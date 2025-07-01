@@ -6,8 +6,8 @@ import { removeActiveObject, setActiveObject } from '../../../Reducer/Slices/Edi
 import WelComePage from './WelComePage';
 import MediaViewer from './MediaViewer';
 
-const EditorIndex = ({room}) => {
-  const {activeObjects,activeObject} = useSelector(state => state.editor);
+const EditorIndex = ({room,permissions}) => {
+  const {activeObjects,activeObject,isFileChanged} = useSelector(state => state.editor);
   const dispatch = useDispatch();
   return (
     <div className='h-full w-full bg-slate-900'>
@@ -36,10 +36,10 @@ const EditorIndex = ({room}) => {
               !activeObject&&<WelComePage/>
             }
             {
-              activeObject&&activeObject.isFile&&<MonacoEditor room={room}/>
+              activeObject&&activeObject.isFile&&<MonacoEditor room={room} permissions={permissions}/>
             }
             {
-              activeObject&&(!activeObject.isFile)&&<MediaViewer/>
+              activeObject&&(!activeObject.isFile)&&<MediaViewer permissions={permissions}/>
             }
         </div>
     </div>

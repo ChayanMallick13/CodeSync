@@ -1,9 +1,12 @@
 const cloudinary = require('cloudinary').v2;
 
+
+
+
 exports.removeFileFromCloudinary = async(fileUrl,fileType) => {
     try {
         const options = {
-            resource_type:'auto',
+            resource_type:fileType,
         };
 
         //take out the public id from link

@@ -6,10 +6,12 @@ import { features } from "../Assets/Data/features";
 import FeautureBox from "../Components/Common/FeautureBox";
 import Footer from "../Components/Common/Footer";
 import ReviewSlider from "../Components/Common/ReviewSlider";
+import { useNavigate } from "react-router-dom";
 
 const Homepage = () => {
   const featuresRef = useRef(null);
   const topRef = useRef(null);
+  const navigate = useNavigate();
   return (
     <>
 
@@ -36,6 +38,11 @@ const Homepage = () => {
             <button
               className="bg-white bg-opacity-20 text-slate-200 font-semibold px-6 py-3 rounded-lg w-fit hover:bg-opacity-30
           transition-all flex items-center gap-x-3 border-[1px]"
+          onClick={() => {
+              const code = Math.random().toString(36);
+              navigate(`/demo/${code}`);
+            }
+          }
             >
               <FaPlay />
               <span>Try Live Demo</span>

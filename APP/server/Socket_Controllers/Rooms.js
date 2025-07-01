@@ -1,6 +1,11 @@
 const { default: mongoose } = require("mongoose");
 const Room = require("../Models/Room");
 const User = require("../Models/User");
+const File = require("../Models/File");
+const Folder = require("../Models/Folder");
+const Media = require("../Models/Media");
+const { removeFileFromCloudinary } = require("../Utilities/FileRemover");
+const { mapMediaTypeToCloudinaryResource } = require("../Data/extensionsData");
 
 function getRandomRGBColor() {
   const randColor = () => Math.floor(Math.random() * 100) + 50; // Generates 50–149
@@ -13,7 +18,13 @@ function getRandomRGBColor() {
 
 exports.handleUserRoomJoin = async(data,socket) => {
     try {
-        const {roomId,userId} = data;
+        const {roomId,userId,isDash} = data;
+
+        if(isDash){
+            socket.join(roomId);
+            console.log('Yses correct');
+            return;
+        }
 
         // get the rrom
         const room = await Room.findById(roomId);
@@ -61,7 +72,9 @@ exports.handleUserRoomJoin = async(data,socket) => {
 
 exports.handleUserRoomLeave = async(data,socket) => {
     try {
-        const {roomId,userId} = data;
+        const {roomId,userId,changedFiles} = data;
+
+        // console.log(data);
 
         // remove the user from active place
         const removedUserRoom = await Room.findByIdAndUpdate(roomId,{
@@ -76,12 +89,69 @@ exports.handleUserRoomLeave = async(data,socket) => {
         .exec()
         ;
 
+        if(removedUserRoom.activeUsers.length===0){
+            const allFolders = await Folder.find({
+                Room:roomId,
+                isDeleted:true,
+            });
+
+            for(let folder of allFolders){
+                if(!folder.isRoot)
+                    await Folder.findByIdAndUpdate(folder.parentFolder,{
+                $pull:{
+                    Folders:folder._id,
+                }})
+                await Folder.findByIdAndDelete(folder._id);
+            }
+
+            const allMedia = await Media.find({
+                Room:roomId,
+                isDeleted:true,
+            });
+
+            for(let media of allMedia){
+                await removeFileFromCloudinary(media.url,mapMediaTypeToCloudinaryResource(media.mediaType));
+                await Folder.findByIdAndUpdate(media.Folder,{
+                    $pull:{
+                        Medias:media._id,
+                    }
+                });
+                await Media.findByIdAndDelete(media._id);
+            }
+
+            const allFiles = await File.find({
+                Room:roomId,
+                isDeleted:true,
+            });
+
+            for(let file of allFiles){
+                await Folder.findByIdAndUpdate(file.Folder,{
+                    $pull:{
+                        Files:file._id,
+                    }
+                });
+                await File.findByIdAndDelete(file._id);
+            }
+        }
+
         const user = await User.findById(userId);
 
         const body = {
             newUser:`${user.firstName} ${user?.lastName}`,
             room:removedUserRoom,
         }
+
+        for(let file of changedFiles){
+            let item = await File.findByIdAndUpdate(file.fileId,{
+                content:file.content,
+            },{new:true});
+            const res = {
+                item,
+                type:'file',
+            }
+            socket.to(roomId).emit('fileChnagedSocketRes',res)
+        }
+        
 
         socket.to(roomId).emit('user-leave-event',body);
 
@@ -92,4 +162,30 @@ exports.handleUserRoomLeave = async(data,socket) => {
         console.error(error.message);
         console.log('Some Error Occurred in Socket Io handler leave room');
     }
+}
+
+exports.upDateOldData = async(data,io) => {
+    const {itemId,type,roomId,userName,operation,oldName,isnew} = data;
+    console.log(data);
+    let item = '';
+    if(type==='file'){
+        item = await File.findById(itemId);
+    }
+    else if(type==='folder'){
+        item = await Folder.findById(itemId);
+    }
+    else if(type==='media'){
+        item = await Media.findById(itemId);
+    }
+    // console.log(data,item);
+    const res = {
+        item,
+        oldName,
+        userName,
+        operation,
+        type,
+        isnew,
+    };
+    console.log(res);
+    io.to(roomId).emit('fileChnagedSocketRes',res);
 }
