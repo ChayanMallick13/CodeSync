@@ -66,21 +66,28 @@ const AddFileModal = ({setShowAddFileModal,folderId,socket,addObjectToActive}) =
     },[mediaFile]
   )
 
+
   useEffect(
     () => {
       isSuportedExtension(fileName);
-    },[isFile]
+      console.clear();
+      console.log(fileName,isFile);
+    },[fileName,isFile]
   )
 
-  function isSuportedExtension(name){
+  function isSuportedExtension(name=''){
     let msg = '';
     let value = false;
     let extension = null;
     if(name){
       extension = name.split('.').at(-1).toLowerCase();
     }
-    if(name==='' || !extension){
+    if(name===''){
       msg = 'Item Name Cannot be blank';
+      value = true;
+    }
+    else if(!extension && isFile!==1){
+      msg='Item name Must Have a extension'
       value = true;
     }
     else if(!name.includes('.')){
@@ -102,7 +109,11 @@ const AddFileModal = ({setShowAddFileModal,folderId,socket,addObjectToActive}) =
       }
     }
     if(isFile===2){
-      if(!value && !isMimeExtensionMatch(mediaFile.type,extension)){
+      if(!mediaFile){
+        value = true;
+        msg = 'A Media File Is Required';
+      }
+      else if(!value && !isMimeExtensionMatch(mediaFile.type,extension)){
         value = true;
         msg = 'Extension And File Format Not Match';
       }
