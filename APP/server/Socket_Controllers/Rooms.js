@@ -66,6 +66,7 @@ exports.handleUserRoomJoin = async(data,socket) => {
         }
 
         socket.to(roomId).emit('user-join-event',body);
+        socket.emit('user-join-event', body);  
 
     } catch (error) {
         console.log(error.message);
