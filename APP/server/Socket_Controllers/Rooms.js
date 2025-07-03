@@ -32,7 +32,7 @@ exports.handleUserRoomJoin = async(data,socket) => {
         const room = await Room.findById(roomId);
         // console.log(room);
         // console.log(room.activeUsers,userId);
-        const val = room.activeUsers.filter(ele => ele.user===(userId));
+        const val = room.activeUsers.filter(ele => ele.user.toString()===(userId.toString()));
         // console.log(val);
         if(val.length!==0){
             return;
