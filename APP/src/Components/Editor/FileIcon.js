@@ -44,7 +44,7 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
     // console.log(item?._id,type,operation,fileId,'file');
     if((item?._id===fileId) && (type==='file')){
       setfile(item);
-      console.log(activeObjectRef.current?._id,item._id,fileId,activeObjects);
+      // console.log(activeObjectRef.current?._id,item._id,fileId,activeObjects);
       if(activeObjectRef.current?._id===item?._id){
         addObjectToActive(true,item);
         // console.log('item');
@@ -130,7 +130,7 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
         disabled={disableBtn}
         onClick={()=>{
           console.clear();
-          console.log('Hello');
+          // console.log('Hello');
           handleUndoDelete(null,id,'file',fileId,()=>{},setDisableBtn,user,socketRef?.current,file?.name);
         }}
         >

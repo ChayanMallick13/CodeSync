@@ -170,7 +170,7 @@ exports.deleteMedia = async(req,res) => {
     try {
         const {mediaId,roomId,softDelete,softDeleteVal} = req.body;
 
-        console.log(req.body);
+        // console.log(req.body);
         const reqUser = req.user;
         const room = await RoomModel.findById(roomId);
 
@@ -254,7 +254,7 @@ exports.renameFile = async (req, res) => {
     const room = await RoomModel.findById(roomId);
 
     if(!reqUser || !reqFile || !room || !newName){
-        console.log(reqUser,reqFile,room,newName);
+        // console.log(reqUser,reqFile,room,newName);
         return res.status(404).json({
           success: false,
           message: "user or file Not Found"
@@ -268,7 +268,7 @@ exports.renameFile = async (req, res) => {
 
         }
     );
-    console.log(permisiions);
+    // console.log(permisiions);
     if( (!reqUser._id.equals(room.owner)) && ((!permisiions) || (!permisiions.write))){
         return res.status(401).json({
           success: false,
@@ -424,7 +424,7 @@ exports.getItemDetails = async(req,res) => {
         const reqUser = req.user;
         const types = ['file','folder','media'];
         if(!itemId || !roomId || !reqUser || !types.includes(type)){
-            console.log(itemId,roomId,reqUser,type);
+            // console.log(itemId,roomId,reqUser,type);
             return res.status(400).json(
                 {
                     success:false,
@@ -534,7 +534,7 @@ exports.createAItem = async (req, res) => {
   try {
     const user = req.user;
     const {parentFolder,type,roomId,name,language,extension} = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     const newFile = req.files?.newFile;
     const types = ['file','folder','media'];
 

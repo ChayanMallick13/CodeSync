@@ -15,7 +15,7 @@ export const getProfileDetails = (setLoader) => {
         await apiConnector('GET',profileLinks.FETCH_PROFILE_DETAILS).then(
             (res) => {
                 dispatch(setUser(res.data.user));
-                console.log(res.data);
+                // console.log(res.data);
             }
         )
         if(setLoader){

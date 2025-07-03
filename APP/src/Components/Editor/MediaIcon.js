@@ -96,7 +96,7 @@ const MediaIconComponet = ({ mediaId, addObjectToActive, socketRef,isDeleted,per
         disabled={disableBtn}
         onClick={()=>{
           console.clear();
-          console.log('Hello');
+          // console.log('Hello');
           handleUndoDelete(null,id,'media',mediaId,()=>{},setDisableBtn,user,socketRef?.current,media?.name);
         }}
         >

@@ -28,7 +28,7 @@ const SideBar = () => {
       <button className="absolute text-white z-20 -top-11 left-3 text-2xl md:hidden block"
       onClick={()=>{
         setShowDash(prev => !prev);
-        console.log('hiii ');
+        // console.log('hiii ');
       }}
       >
         <GiHamburgerMenu/>

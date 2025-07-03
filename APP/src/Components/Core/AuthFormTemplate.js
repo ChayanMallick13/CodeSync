@@ -19,7 +19,7 @@ const AuthFormTemplate = ({ isSignUp, setSignUp }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const {authLoading} = useSelector(state => state.auth);
-  console.log(authLoading);
+  // console.log(authLoading);
 
   function signInwithGoogleHandler(res){
     dispatch(SignInWithGoogle(res.credential,navigate));

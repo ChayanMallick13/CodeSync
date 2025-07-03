@@ -157,7 +157,7 @@ exports.createRoomForGithubRepo = async(req,res) => {
         let {owner,branch,name,description} = req.body;
 
         if(!user || !owner || !branch || !name ){
-            console.log(user,owner,branch,name);
+            // console.log(user,owner,branch,name);
             return res.status(404).json(
                 {
                     success:false,
@@ -392,7 +392,7 @@ exports.deleteRoom = async(req,res) => {
         const {roomId} = req.body;
         const user = req.user;
 
-        console.log(roomId,3);
+        // console.log(roomId,3);
         
         if(!roomId || !user){
             return res.status(400).json(
@@ -403,7 +403,7 @@ exports.deleteRoom = async(req,res) => {
             )
         }
 
-        console.log(roomId,1);
+        // console.log(roomId,1);
 
         const reqUser = await User.findById(user._id);
 
@@ -418,7 +418,7 @@ exports.deleteRoom = async(req,res) => {
             )
         }
 
-        console.log(roomId,2);
+        // console.log(roomId,2);
 
         //delete the chat messages
         for(let msgId of room.messages){

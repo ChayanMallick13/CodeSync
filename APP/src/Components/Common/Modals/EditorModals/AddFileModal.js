@@ -53,9 +53,9 @@ const AddFileModal = ({setShowAddFileModal,folderId,socket,addObjectToActive}) =
 // Example: appending data
 
 // Print all entries
-for (let pair of body.entries()) {
-  console.log(`${pair[0]}:`, pair[1]);
-}
+// for (let pair of body.entries()) {
+//   console.log(`${pair[0]}:`, pair[1]);
+// }
 
   }
 
@@ -167,7 +167,7 @@ for (let pair of body.entries()) {
               value={fileName}
               onChange={(e) => {
                 setFileName(e.target.value);
-                console.log(isSuportedExtension(e.target.value));
+                // console.log(isSuportedExtension(e.target.value));
                 // console.log(e.target.value);
               }}
               placeholder={`Enter a New Name for the ${

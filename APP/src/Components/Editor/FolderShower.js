@@ -28,7 +28,7 @@ const FolderShowerComponent = ({ folderId, socketRef,prevFolderId,isDeletedProps
   }
 
   function handleChange({item,userName,operation,type,oldName,recover}){
-    console.log('=====',recover);
+    // console.log('=====',recover);
       if((item?._id === (folderId)) && (type ==='folder')){
         if(operation==='folder'){
             setRecFolders(item?.Folders);

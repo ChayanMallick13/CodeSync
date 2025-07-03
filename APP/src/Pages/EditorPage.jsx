@@ -53,7 +53,7 @@ const EditorPage = () => {
         userId:user._id,
         changedFiles:chnagedFilesRef.current,
       }
-    console.log('The Value is -> ',chnagedFilesRef.current);
+    // console.log('The Value is -> ',chnagedFilesRef.current);
     socketRef.current?.emit('disconnect_from_room',data);
     socketRef.current?.disconnect();
     dispatch(resetRoom());
@@ -132,7 +132,7 @@ const EditorPage = () => {
                 roomId:id,
                 userId:user._id,
             };
-            console.log(data);
+            // console.log(data);
             socket.emit('connect_To_Room',data);
         })
 

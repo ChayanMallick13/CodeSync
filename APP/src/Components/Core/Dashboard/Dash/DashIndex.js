@@ -119,7 +119,7 @@ const DashIndex = () => {
         {
           (!showUserRepos && !loader)&&userRooms.map(
             (room,key) => {
-              console.log('Room',room);
+              {/* console.log('Room',room); */}
               return <RoomCard
                 {...room}
                 key={key}

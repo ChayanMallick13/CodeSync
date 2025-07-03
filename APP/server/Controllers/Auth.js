@@ -107,7 +107,7 @@ exports.handleGithubCallback = async (req, res) => {
       success: true,
     };
 
-    console.log(req.body);
+    // console.log(req.body);
   } catch (error) {
     console.error(error);
     console.log("Some Problem Occurred in Signing In with github");
@@ -128,7 +128,7 @@ exports.handleGoogleSignIn = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    console.log(payload);
+    // console.log(payload);
 
     if (!payload.email_verified) {
       throw new Error("Email Not verified in Google Sign In");
@@ -145,7 +145,7 @@ exports.handleGoogleSignIn = async (req, res) => {
       token: credential,
     };
 
-    console.log(req.body);
+    // console.log(req.body);
 
     
 
@@ -192,7 +192,7 @@ exports.handleSignIn = async (req, res) => {
                 }
             )
         }
-        console.log('password',password,userExits);
+        // console.log('password',password,userExits);
         if(accountType==='traditional'){
             const passwordsMatch = await bcrypt.compare(password,userExits.password);
             if(!passwordsMatch){
@@ -241,7 +241,7 @@ exports.handleSignIn = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        console.log('Some Error in Loggin You In');
+        // console.log('Some Error in Loggin You In');
         if(req.body.accountType===providerTypes.GITHUB){
             return res.redirect(process.env.UNSUCCESSFULL_LOGIN_REDIRECT);
         }
@@ -274,7 +274,7 @@ exports.handleSignUp = async (req, res) => {
     } = req.body;
 
 
-    console.log(otp,typeof(otp),success);
+    // console.log(otp,typeof(otp),success);
 
     // console.log(req.body);
 
@@ -307,7 +307,7 @@ exports.handleSignUp = async (req, res) => {
       email,
     });
 
-    console.log(accountType);
+    // console.log(accountType);
 
     if(userExists && userExists.accountType.includes(accountType)){
         if(accountType==='traditional'){
@@ -417,7 +417,7 @@ exports.handleSignUp = async (req, res) => {
 
     // if the github is provide redirect ir else send a res
     if(accountType==='github' || accountType==='google'){
-      console.log('This is a call to next');
+      // console.log('This is a call to next');
         return this.handleSignIn(req,res);
     }
 
@@ -515,7 +515,7 @@ exports.sendChangePasswordMail = async(req,res) => {
 exports.resetPassword = async(req,res) => {
   try {
     const {token,password,confirmPassword} = req.body;
-    console.log(req.body);
+    // console.log(req.body);
 
     const user = await User.findOne({
       resetpasswordToken:{

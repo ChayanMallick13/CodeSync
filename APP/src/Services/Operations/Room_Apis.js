@@ -106,7 +106,7 @@ export const joinRoom = async(body,setdisableBtn,setShowMadal,dispatch) => {
 export const getAllMessages = async(setMessages,body) => {
     try {
         const res = await apiConnector('POST',roomLinks.GET_ALL_MESSAGES,body);
-        console.log('data',res.data.messages);
+        // console.log('data',res.data.messages);
         if(res.data.success){
             setMessages(res.data.messages);
         }

@@ -14,7 +14,7 @@ const ShowMembers = ({
   socket,
   showChat,
 }) => {
-  console.log(permittedUsers, "pp");
+  // console.log(permittedUsers, "pp");
   const { id } = useParams();
   let activeusersId = activeUsers?.map((ele) => ele.user._id);
   const [showChangeOption, setShowChangeOptions] = useState(false);
@@ -31,7 +31,7 @@ const ShowMembers = ({
     newPos,
     oldPos
   ) {
-    console.log(body);
+    // console.log(body);
     const res = await changePermissions(
       body,
       setDisableBtn,
@@ -163,7 +163,7 @@ const ShowMembers = ({
                     onClick={() => {
                       setShowChangeOptions(key+1);
                       console.clear();
-                      console.log(showChangeOption);
+                      // console.log(showChangeOption);
                     }}
                   >
                     <SlOptionsVertical />

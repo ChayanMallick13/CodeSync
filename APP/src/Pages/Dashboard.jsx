@@ -13,7 +13,7 @@ const Dashboard = () => {
     useEffect(
         () => {
             dispatch(getProfileDetails());
-            console.log(user,location.pathname);
+            // console.log(user,location.pathname);
         },[location.pathname]
     )
     // if(!user){

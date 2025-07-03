@@ -73,7 +73,7 @@ export const signIn = (data,navigate) => {
         const tid = toast.loading('Loading ...');
         dispatch(setAuthLoading(true));
         data.accountType = providerTypes.TRADITIONAL;
-        console.log(data);
+        // console.log(data);
         await apiConnector('POST',authApis.LOGIN_API,data).then(
             (res) => {
                 toast.success(res.data.message);

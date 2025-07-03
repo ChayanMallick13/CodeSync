@@ -41,7 +41,7 @@ exports.sendOtp = async(req,res) => {
         );
 
         //otp is
-        console.log('otp is ',otp);
+        // console.log('otp is ',otp);
 
         //return successfull response
         return res.status(200).json({

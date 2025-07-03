@@ -17,7 +17,7 @@ const ProfileIndex = () => {
   const dispatch = useDispatch();
   const { authLoading } = useSelector((state) => state.auth);
 
-  console.log(user);
+  // console.log(user);
 
   function signInwithGoogleHandler(res) {
     dispatch(SignInWithGoogle(res.credential, navigate));

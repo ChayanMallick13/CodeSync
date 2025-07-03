@@ -22,7 +22,7 @@ const OTPPage = () => {
       otp,
       success:true,
     }
-    console.log(data);
+    // console.log(data);
     dispatch(signUp(data,navigate));
   }
 

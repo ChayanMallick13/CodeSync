@@ -9,7 +9,7 @@ const MediaViewer = () => {
   const videoExt = ["mp4", "webm", "mov", "avi", "mkv"];
   const docExt = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx"];
   const { activeObject } = useSelector((state) => state.editor);
-  console.log(activeObject);
+  // console.log(activeObject);
   const types = ["image", "audio", "video", "docs"];
   return (
     <div className="h-full">

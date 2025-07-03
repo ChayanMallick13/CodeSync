@@ -27,7 +27,7 @@ const ChatBox = ({ socketRef ,showChat}) => {
 
   useEffect(() => {
     socketRef.current?.on("newMessageAdd", (newMsg) => {
-      console.log("newMessageAdd");
+      // console.log("newMessageAdd");
       setChats((prev) => [...prev, newMsg]);
     });
   }, []);

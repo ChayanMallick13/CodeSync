@@ -24,7 +24,7 @@ exports.handleUserRoomJoin = async(data,socket) => {
             socket.join(roomId);
             // const permissions = await Permiss
             socket.to(roomId).emit('checkNewMember',{userDetails:userDetails,remove});
-            console.log('temp',userDetails);
+            // console.log('temp',userDetails);
             return;
         }
 
@@ -169,7 +169,7 @@ exports.handleUserRoomLeave = async(data,socket) => {
 
 exports.upDateOldData = async(data,io) => {
     const {itemId,type,roomId,userName,operation,oldName,isnew,recover} = data;
-    console.log(data);
+    // console.log(data);
     let item = '';
     if(type==='file'){
         item = await File.findById(itemId);
@@ -190,7 +190,7 @@ exports.upDateOldData = async(data,io) => {
         isnew,
         recover,
     };
-    console.log(res);
+    // console.log(res);
     io.to(roomId).emit('fileChnagedSocketRes',res);
 }
 
@@ -234,8 +234,8 @@ exports.removeUserFromRoom = async(data,socket) => {
     }
 
     const newRoom = await Room.findByIdAndUpdate(roomDetails._id,updateValue,{new:true});
-    console.log(data);
-    console.log(newRoom);
+    // console.log(data);
+    // console.log(newRoom);
 
     socket.to(roomId).emit('checkNewMember',{userDetails:{_id:targetUserId},remove:true,targetUser,kickedBy});
 

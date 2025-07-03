@@ -7,7 +7,7 @@ exports.sendMessageHandler = async(data,io) => {
     try {
         const {Sender,Message,Room} = data;
 
-        console.log(data);
+        // console.log(data);
 
         // create a new message
         const newMessage = await ChatMessage.create(
@@ -21,7 +21,7 @@ exports.sendMessageHandler = async(data,io) => {
         const user = await User.findById(Sender);
         newMessage.Sender = user;
 
-        console.log(newMessage);
+        // console.log(newMessage);
 
         // tell everyone about the new message except the sender
         io.to(Room).emit('newMessageAdd',newMessage);

@@ -29,7 +29,7 @@ const editorSlice = createSlice(
                 if(!added){
                     newState.push(action.payload);
                 }
-                console.log('in slice new array ',newState);
+                // console.log('in slice new array ',newState);
                 state.activeObjects= newState;
             },
             removeActiveObject(state,action){
@@ -48,7 +48,7 @@ const editorSlice = createSlice(
                 }
             },
             setActiveObject(state,action){
-                console.log('settingActiveObject',action.payload);
+                // console.log('settingActiveObject',action.payload);
                 state.activeObject = action.payload;
             },
             unsetActiveObject(state){
@@ -68,7 +68,7 @@ const editorSlice = createSlice(
                         content,
                     });
                 }
-                console.log(val);
+                // console.log(val);
                 state.chnagedFiles = val;
             },
             setIsFileSynced(state,action){

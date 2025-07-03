@@ -102,7 +102,7 @@ exports.updatePassword = async(req,res) => {
         const {oldPassword,newPassword} = req.body;
         const user = req.user;
 
-        console.log(user);
+        // console.log(user);
 
         if(!oldPassword || !newPassword){
             return res.status(401).json(
@@ -174,7 +174,7 @@ exports.changeProfilePicture = async(req,res) => {
             )
         }
         const previousImage = userExists.image;
-        console.log('file',req.files);
+        // console.log('file',req.files);
         const newImage = req.files?.profilePicture;
         
         if(isCloudinaryUrl(previousImage)){
