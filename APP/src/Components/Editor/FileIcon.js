@@ -7,7 +7,7 @@ import { RiDeleteBin5Line } from "react-icons/ri";
 import RenameAItem from "../Common/Modals/EditorModals/RenameAItem";
 import DeleteAItem from "../Common/Modals/EditorModals/DeleteAItem";
 import { useParams } from "react-router-dom";
-import { getItemDetails } from "../../Services/Operations/Room_Apis";
+import { getItemDetails, handleUndoDelete } from "../../Services/Operations/Room_Apis";
 import toast from "react-hot-toast";
 import { setActiveObject } from "../../Reducer/Slices/EditorSlice";
 import { languageToDeviconMap } from "../../Utils/allLanguages";
@@ -17,6 +17,8 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const activeObjectRef = useRef(activeObject);
+  const [disableBtn,setDisableBtn] = useState(false);
+    const {user} = useSelector(state => state.profile);
   
 
   const [file, setfile] = useState(null);
@@ -38,7 +40,7 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
 
 
   
-  function handleChange({item,userName,oldName,type,operation}){
+  function handleChange({item,userName,oldName,type,operation,recover}){
     // console.log(item?._id,type,operation,fileId,'file');
     if((item?._id===fileId) && (type==='file')){
       setfile(item);
@@ -51,7 +53,7 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
         toast.success(`File ${oldName} renamed to ${item?.name} by ${userName}`);
       }
       else if(operation==='delete'){
-        toast.success(`File ${item?.name} deleted by ${userName}`);
+        toast.success(`File ${item?.name} ${recover?('Recovered'):('Deleted')} by ${userName}`);
       }
       else{
         toast.success('yo yo');
@@ -103,7 +105,7 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
         permissions?.delete &&
           <div
         className={`w-0 group-hover:w-max absolute right-0 text-lg items-center flex gap-x-1 
-      bg-slate-900 px-0 group-hover:px-2 ${(file?.isDeleted)?('hidden'):('')}`}
+      bg-slate-900 px-0 group-hover:px-2 ${(file?.isDeleted || isDeleted)?('hidden'):('')}`}
       >
         <button>
           <MdDriveFileRenameOutline
@@ -120,6 +122,20 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
           <RiDeleteBin5Line />
         </button>
       </div>
+      }
+      {
+        permissions?.delete&&<button className={`${(isDeleted || file?.isDeleted)?('block'):('hidden')} font-extrabold
+        text-green-400 absolute right-0
+        `}
+        disabled={disableBtn}
+        onClick={()=>{
+          console.clear();
+          console.log('Hello');
+          handleUndoDelete(null,id,'file',fileId,()=>{},setDisableBtn,user,socketRef?.current,file?.name);
+        }}
+        >
+          Recover
+        </button>
       }
       {showRenameModal && (
         <RenameAItem

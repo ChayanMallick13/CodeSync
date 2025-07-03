@@ -4,7 +4,7 @@ import { FaCrown, FaEye, FaPen } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { deleteARoom } from "../../../../Services/Operations/Room_Apis";
-import { setUser } from "../../../../Reducer/Slices/profileSlice";
+import { deleteFromRooms, setUser } from "../../../../Reducer/Slices/profileSlice";
 import { io } from "socket.io-client";
 
 const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
@@ -17,6 +17,8 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
   const socketRef = useRef();
   const [activeUsersStat,setActiveUsersState] = useState(activeUsers);
   const [activeUsersList,setactiveUsersList] = useState(activeUsers?.map(ele => ele?.user?.image) || []);
+  const [isDeleted,setIsdeleted] = useState(false);
+
 
   useEffect(
     () => {
@@ -24,7 +26,7 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
     },[activeUsersStat]
   )
 
-  function handleRoomDelete(){
+  async function handleRoomDelete(){
     if(!confirmDelete){
       toast.error('Check The CheckBox to Confirm Deletion');
       return;
@@ -33,7 +35,8 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
       toast.error('Users Are Using The Room Try After SomeTime');
       return;
     }
-    deleteARoom({roomId:_id},setDisableBtn,dispatch);
+    const val = await deleteARoom({roomId:_id,userName:`${user.firstName} ${user.lastName}`,name},
+      setDisableBtn,dispatch,socketRef.current);
   }
 
   function handleLeaveRoom() {
@@ -42,6 +45,13 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
   function activeUsersChangeHandler(data) {
     const {room} = data;
     setActiveUsersState(room.activeUsers);
+  }
+  function checkisDeletd(data){
+    const {roomId,name,userName} = data;
+    if(roomId===_id){
+      toast.error(`Room ${name} deleted by Owner ${userName}`);
+      setIsdeleted(true);
+    }
   }
 
   useEffect(
@@ -54,7 +64,8 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
         socket.on('connect',() => {
             // toast.success('Room Socket Connection Successfull');
             console.log('Socket Io Connection Successfull');
-            const data = {isDash:true,roomId:_id}
+            const userDetails = {...user,permissions};
+            const data = {isDash:true,roomId:_id,userDetails};
             // console.log(data);
             socket.emit('connect_To_Room',data);
         })
@@ -68,6 +79,8 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
 
         socket.on('user-leave-event',activeUsersChangeHandler);
 
+        socket.on('roomDeletedCheck',checkisDeletd);
+
 
         socket.on("disconnect", () => {
             // toast.success('Disconnected from Room');
@@ -79,10 +92,17 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
             handleLeaveRoom();
             socket.off('user-join-event',activeUsersChangeHandler);
             socket.off('user-leave-event',activeUsersChangeHandler);
+            socket.off('roomDeletedCheck',checkisDeletd);
             window.removeEventListener('beforeunload',handleLeaveRoom);
         }
     },[_id]
   )
+
+  if(isDeleted){
+    handleLeaveRoom();
+    dispatch(deleteFromRooms(_id));
+    return <></>
+  }
 
   return (
     <div className="bg-slate-900 border-[1px] border-slate-400/50 p-4 w-[450px] h-[290px] flex flex-col
@@ -172,6 +192,21 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
             Delete This Room
           </button>
         </div>
+      }
+      {
+        (user._id !== owner)&&<button className="font-extrabold text-red-600"
+        onClick={()=>{
+          socketRef.current.emit('leaveRoomByUser',{
+            targetUserId:user._id,
+            kick:false,
+            ban:false,
+            roomId:_id,
+          })
+          setIsdeleted(true);
+        }}
+        >
+          Leave Room
+        </button>
       }
     </div>
   );

@@ -14,6 +14,7 @@ import EditorIndex from "../Components/Editor/MonacoEditor/EditorIndex";
 import { resetRoom } from "../Reducer/Slices/EditorSlice";
 
 const EditorPage = () => {
+  
   const { user } = useSelector((state) => state.profile);
   const socketRef = useRef(null);
   const [showRoomDetails,setShowRoomDetails] = useState(false);
@@ -23,6 +24,8 @@ const EditorPage = () => {
   const dispatch = useDispatch();
   const roomRef = useRef(null);
   const [room, setRoom] = useState(null);
+  const permissionsRef = useRef();
+  const navigate = useRef();
 
   useEffect(
     () => {
@@ -32,8 +35,14 @@ const EditorPage = () => {
 
   useEffect(
     () => {
+      permissionsRef.current = permissions;
+    },[permissions]
+  )
+
+  useEffect(
+    () => {
       roomRef.current = room;
-    },[room]
+    },[room?.activeUsers,room,room?.permittedUsers]
   )
 
   const { id } = useParams();
@@ -61,6 +70,25 @@ const EditorPage = () => {
     const {newUser,room} = data;
     setRoom(prev => ({...prev,activeUsers:room.activeUsers}));
     toast.error(`${newUser} has Left The Session`);
+  }
+
+  function checkNewMember(data){
+    const {userDetails,remove,targetUser,kickedBy} = data;
+    if(userDetails._id===roomRef.current.owner._id){
+      return;
+    }
+    let arr = roomRef.current.permittedUsers.filter(ele => ele._id === userDetails._id);
+    console.clear();
+    if(remove && arr.length!==0){
+      arr = roomRef.current.permittedUsers.filter(ele => ele._id !== userDetails._id)
+    }
+    else if(!remove && arr.length===0){
+      arr = [...roomRef.current.permittedUsers,userDetails];
+    }
+    if(remove){
+      toast.success(`${targetUser} removed from Room by ${kickedBy}`);
+    }
+    setRoom(prev => ({...prev,permittedUsers:arr}));
   }
 
   function handlePermissionUpdate(data){
@@ -119,6 +147,8 @@ const EditorPage = () => {
 
         socket.on('updateRoomPermissions',handlePermissionUpdate);
 
+        socket.on('checkNewMember',checkNewMember);
+
         socket.on("disconnect", () => {
             // toast.success('Disconnected from Room');
             console.log('Socket Io DisConnection Successfull');
@@ -129,13 +159,12 @@ const EditorPage = () => {
             socket.off('user-join-event',newUserJoinGandler);
             socket.off('user-leave-event',userLeaveHandler);
             socket.off('updateRoomPermissions',handlePermissionUpdate);
+            socket.off('checkNewMember',checkNewMember);
             handleLeaveRoom();
             window.removeEventListener('beforeunload',handleLeaveRoom);
         }
     },[user,id]
   )
-
-  console.log(room);
 
   if (!room) {
     return <Loader />;

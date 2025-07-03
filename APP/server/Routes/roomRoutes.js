@@ -5,7 +5,8 @@ const {
     getUserRooms,
     getRoomDetails,
     joinARoom,
-    deleteRoom
+    deleteRoom,
+    CreateARoom
 } = require('../Controllers/Rooms');
 
 const { auth } = require('../Middlewares/Auth');
@@ -33,6 +34,7 @@ roomRoutes.post('/media/delete',auth,deleteMedia);
 roomRoutes.post('/delete',auth,deleteRoom);
 roomRoutes.post('/createItem',auth,createAItem);
 roomRoutes.post('/changePermissions',auth,changeUserPermmissions);
+roomRoutes.post('/createRoom',auth,CreateARoom);
 
 
 module.exports = roomRoutes;

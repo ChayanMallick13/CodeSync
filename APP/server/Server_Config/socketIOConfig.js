@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const { handleUserRoomJoin, handleUserRoomLeave, upDateOldData } = require("../Socket_Controllers/Rooms");
+const { handleUserRoomJoin, handleUserRoomLeave, upDateOldData, removeUserFrom, removeUserFromRoom } = require("../Socket_Controllers/Rooms");
 const { sendMessageHandler } = require("../Socket_Controllers/chat_Msg");
 require("dotenv").config();
 
@@ -16,6 +16,7 @@ module.exports = function setUpSocketIo(server) {
         console.log("User Connected To Socket IO Web Socket");
 
         socket.on('connect_To_Room',(data) => {
+            // console.log(data);
             handleUserRoomJoin(data,socket);
         })
 
@@ -33,6 +34,15 @@ module.exports = function setUpSocketIo(server) {
 
         socket.on('userPermissionChange',(data) => {
             io.to(data.roomId).emit('updateRoomPermissions',data);
+        })
+
+        socket.on('handleRoomDeleted',async (data)=>{
+            // console.log(data,'newww');
+            socket.to(data.roomId).emit('roomDeletedCheck',data);
+        })
+
+        socket.on('leaveRoomByUser',(data)=>{
+            removeUserFromRoom(data,io);
         })
 
         socket.on('disconnect',() => {

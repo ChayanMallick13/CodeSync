@@ -7,6 +7,8 @@ import RenameAItem from "../Common/Modals/EditorModals/RenameAItem";
 import DeleteAItem from "../Common/Modals/EditorModals/DeleteAItem";
 import AddFileModal from "../Common/Modals/EditorModals/AddFileModal";
 import { useParams } from "react-router-dom";
+import { handleUndoDelete } from "../../Services/Operations/Room_Apis";
+import { useSelector } from "react-redux";
 
 const FolderIcon = ({ name, _id, setdropDown, dropDown, socketRef,isRoot,prevFolderId,isDeleted,folderisDeleted
   ,addObjectToActive,permissions
@@ -14,6 +16,10 @@ const FolderIcon = ({ name, _id, setdropDown, dropDown, socketRef,isRoot,prevFol
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddFileModal, setShowAddFileModal] = useState(false);
+  const [disableBtn,setDisableBtn] = useState(false);
+  const {user} = useSelector(state => state.profile);
+
+  
   
   const { id } = useParams();
 
@@ -67,6 +73,17 @@ const FolderIcon = ({ name, _id, setdropDown, dropDown, socketRef,isRoot,prevFol
         }
         
       </div>
+      }
+      {
+        permissions?.delete&&<button className={`${(folderisDeleted || isDeleted)?('block'):('hidden')} font-extrabold
+        text-green-400 absolute right-0`}
+        disabled={disableBtn}
+        onClick={()=>{
+          handleUndoDelete(prevFolderId,id,'folder',_id,()=>{},setDisableBtn,user,socketRef?.current,name);
+        }}
+        >
+          Recover
+        </button>
       }
       {showRenameModal && (
         <RenameAItem

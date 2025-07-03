@@ -144,7 +144,7 @@ export const renameItem = async(body,closeModal,disableBtn,type) => {
     return success;
 }
 
-export const deleteAItem = async(body,closeModal,disableBtn,type) => {
+export const deleteAItem = async(body,closeModal,disableBtn,type,recover=false) => {
     const tid = toast.loading('Loading ...');
     disableBtn(true);
     let success = true;
@@ -161,10 +161,10 @@ export const deleteAItem = async(body,closeModal,disableBtn,type) => {
         }
         const res = await apiConnector('POST',link,body);
         if(res.data.success){
-            toast.success('File Deleted Sucessully');
+            toast.success(`Item ${recover?('Recover'):('Delete')} Sucessully`);
         }
     } catch (error) {
-        toast.error('Some Error in Deleting the file');
+        toast.error(`Some Error in ${recover?('Recovering'):('Deleteing')} the file`);
         success = false;
     }
     toast.dismiss(tid);
@@ -173,14 +173,17 @@ export const deleteAItem = async(body,closeModal,disableBtn,type) => {
     return success;
 }
 
-export const deleteARoom = async(body,setdisableBtn,dispatch) => {
+export const deleteARoom = async(body,setdisableBtn,dispatch,socket) => {
     const tid = toast.loading('Loading ...');
+    let success = false;
     setdisableBtn(true);
     try {
         const res = await apiConnector('POST',roomLinks.DELETE_A_ROOM,body);
         if(res.data.success){
             toast.success('Room is Deleted Successfully');
+            socket.emit('handleRoomDeleted',body);
             await getAllUsersRooms(null,dispatch);
+            success = true;
         }
         else{
             throw new Error("Some Error Occurred");
@@ -190,6 +193,7 @@ export const deleteARoom = async(body,setdisableBtn,dispatch) => {
     }
     setdisableBtn(false);
     toast.dismiss(tid);
+    return success;
 }
 
 export const addAItem = async(body,setDisableBtn,addObjectToActive,type) => {
@@ -234,4 +238,47 @@ export const changePermissions = async(body,setDisableBtn,setCloseModal) => {
     setDisableBtn(false);
     toast.dismiss(tid);
     return data;
+}
+
+export const handleUndoDelete = async(prevFolderId,id,type,itemId,setShowDeleteModal,setDisableBtn,user,socket,name) => {
+    let body = {
+        prevFolderId,roomId:id,softDelete:true,softDeleteVal:false,
+    } ;
+    if(type==='file'){
+        body.fileId = itemId;
+    }
+    else if(type==='folder'){
+        body.folderId = itemId;
+    }
+    else{
+        body.mediaId = itemId;
+    }
+    const success = await deleteAItem(body,setShowDeleteModal,setDisableBtn,type,true);
+    if(!success){
+        console.log('Problem in Recovering');
+        return;
+    }
+    const data = {
+        itemId,type,roomId:id,userName:`${user?.firstName} ${user?.lastName}`,operation:'delete',oldName:name,isnew:false,
+        recover:true,
+    }
+    socket?.emit('fileChnaged',data);
+}
+
+export const createARoom = async(body,setDisableBtn,closeModal,dispatch) => {
+    const tid = toast.loading('Serving Your Request ...');
+    setDisableBtn(true);
+    try {
+        const res = await apiConnector('POST',roomLinks.CRETE_A_ROOM,body);
+        if(!res.data.success){
+            throw new Error("Some Error Occurred");
+        }
+        toast.success('Room Created Successfully');
+        closeModal(false);
+        await getAllUsersRooms(null,dispatch);
+    } catch (error) {
+        toast.error('Some Error Ocurred in Creating a Room');
+    }
+    setDisableBtn(false);
+    toast.dismiss(tid);
 }

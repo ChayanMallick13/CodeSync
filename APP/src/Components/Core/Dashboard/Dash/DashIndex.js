@@ -10,6 +10,7 @@ import { providerTypes } from '../../../../Utils/providerTypes';
 import { Link } from 'react-router-dom';
 import { getAllUsersRooms } from '../../../../Services/Operations/Room_Apis';
 import RoomCard from './RoomCard';
+import CreateARoomModal from '../../../Common/Modals/CreateARoomModal';
 
 const DashIndex = () => {
   const {user,userRooms} = useSelector(state => state.profile);
@@ -17,6 +18,8 @@ const DashIndex = () => {
   const [content,setContent] = useState([]);
   const [loader,setLoader] = useState(false);
   const dispatch = useDispatch();
+  const [showCreateRoom,setShowCreateRoom] = useState(false);
+  const [disableBtn,setDisableBtn] = useState(false);
   let isGithubVerified = user.accountType.includes(providerTypes.GITHUB);
   useEffect(
     () => {
@@ -40,6 +43,8 @@ const DashIndex = () => {
       <button
       className='flex items-center gap-x-2 bg-slate-600 p-3 rounded-xl transition-all
       duration-200 hover:bg-slate-700 mb-8'
+      onClick={()=>{setShowCreateRoom(true)}}
+      disabled={disableBtn}
       >
         <FaPlus/>
         Create a New Room
@@ -124,11 +129,18 @@ const DashIndex = () => {
           
         }
         {
-          !loader && (userRooms.length===0)&&<div
+          !loader && ((userRooms.length===0 && !showUserRepos) || (content.length===0 && showUserRepos))&&<div
           className='text-3xl text-center w-full mt-8 font-extrabold'
           >
             {(showUserRepos)?('No Repositorys Made Till Now'):('No Rooms To Show')}
           </div>
+        }
+        {
+          showCreateRoom&&!loader&&<CreateARoomModal
+            disableBtn={disableBtn}
+            setDisableBtn={setDisableBtn}
+            setShowModal={setShowCreateRoom}
+          />
         }
       </div>
 

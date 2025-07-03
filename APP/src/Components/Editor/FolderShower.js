@@ -27,7 +27,8 @@ const FolderShowerComponent = ({ folderId, socketRef,prevFolderId,isDeletedProps
     dispatch(setActiveObject(object));
   }
 
-  function handleChange({item,userName,operation,type,oldName}){
+  function handleChange({item,userName,operation,type,oldName,recover}){
+    console.log('=====',recover);
       if((item?._id === (folderId)) && (type ==='folder')){
         if(operation==='folder'){
             setRecFolders(item?.Folders);
@@ -46,7 +47,7 @@ const FolderShowerComponent = ({ folderId, socketRef,prevFolderId,isDeletedProps
           setFolder({...folder,name:item?.name});
         }
         else{
-          toast.success(`Folder ${item?.name} deleted by ${userName}`);
+          toast.success(`Folder ${item?.name} ${recover?('Recovered'):('Deleted')} by ${userName}`);
           setRecFolders(item?.Folders);
           setfiles(item?.Files);
           setMedias(item?.Medias);

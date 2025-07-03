@@ -20,9 +20,12 @@ const profileSlice = createSlice({
         },
         setUserRooms(state,action){
             state.userRooms = action.payload;
+        },
+        deleteFromRooms(state,action){
+            state.userRooms = state.userRooms.filter(ele => ele._id!==action.payload);
         }
     }
 })
 
-export const {setUser,resetProfile,setUserRooms} = profileSlice.actions;
+export const {setUser,resetProfile,setUserRooms,deleteFromRooms} = profileSlice.actions;
 export default profileSlice.reducer;

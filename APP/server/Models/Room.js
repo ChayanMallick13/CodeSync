@@ -51,7 +51,11 @@ const RoomSchema = new mongoose.Schema(
             type:Date,
             required:true,
             default:Date.now,
-        }
+        },
+        bannedUsers:[{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"User",
+        }],
     }
 )
 

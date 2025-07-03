@@ -522,7 +522,12 @@ exports.getUserRooms = async (req, res) => {
             Room:allRooms[i]._id,
         });
         allRooms[i].joinCode = null;
-        allRooms[i] = {...allRooms[i].toObject(),permissions:permisiions};
+        if(allRooms[i].owner.equals(id)){
+            allRooms[i] = {...allRooms[i].toObject(),permissions:{read:true,write:true,delete:true}};
+        }
+        else{
+            allRooms[i] = {...allRooms[i].toObject(),permissions:permisiions};
+        }
     }
 
     return res.status(200).json({
@@ -556,7 +561,7 @@ exports.joinARoom = async(req,res) => {
 
         // find the room
         const room = await RoomModel.findById(roomId);
-        if(!room){
+        if(!room || room.bannedUsers.includes(reqUser._id)){
             return res.status(404).json({
               success: false,
               message: "No Such Room Found"
@@ -602,3 +607,95 @@ exports.joinARoom = async(req,res) => {
         )
     }
 }
+
+exports.leaveARoom = async (req, res) => {
+  try {
+    const user = req.user;
+    const {roomId} = req.body;
+
+    const room = await RoomModel.findById(roomId);
+    if(!user._id || !roomId){
+        return res.status(404).json({
+          success: false,
+          message: "Room or User Not Found"
+        });
+    }
+
+    let newRoom = room;
+
+    if(room.permittedUsers.includes(user._id)){
+        newRoom = await RoomModel.findByIdAndUpdate(room._id,{
+            $pull:{
+                permittedUsers:user._id,
+            }
+        },{new:true})
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User Removed From Room",
+      newRoom,
+    });
+
+  } catch (error) {
+    console.error(error);
+    console.log('Some Internal Problem in leaveARoom');
+    return res.status(500).json({
+      success: false,
+      message: 'Some Internal Problem in leaving A Room'
+    });
+  }
+};
+
+exports.CreateARoom = async (req, res) => {
+  try {
+    const user = req.user;
+    const {name,description,} = req.body;
+    const roomJoinCode = crypto.randomUUID().substring(0,16);
+
+    if(!roomJoinCode || !user._id || !name || !description){
+        return res.status(404).json({
+          success: false,
+          message: "User Not Found Or Details Not Found",
+        });
+    }
+
+    // make a root folder
+    let rootFolder = await Folder.create({
+        isRoot:true,
+        name:name,
+        owner:user._id,
+        parentFolder:null,
+    });
+
+    // create a new room
+    let newRoom = await RoomModel.create({
+        description,
+        joinCode:roomJoinCode,
+        name,
+        owner:user._id,
+        rootFolder:rootFolder._id,
+    });
+
+    //update the room in root folder
+    rootFolder = await Folder.findById(rootFolder._id,{
+        Room:newRoom._id,
+    },{new:true}) 
+
+    newRoom = {...newRoom.toObject(),rootFolder};
+
+    return res.status(200).json({
+      success: true,
+      message: "Room Created Successfully",
+      newRoom,
+    });
+
+  } catch (error) {
+    console.error(error);
+    console.log('Some Internal Problem in CreateARoom');
+    return res.status(500).json({
+      success: false,
+      message: 'Some Internal Problem in CreateARoom'
+    });
+  }
+};

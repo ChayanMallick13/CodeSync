@@ -34,6 +34,7 @@ export const roomLinks = {
     DELETE_A_ROOM:BASE_URL+'/room/delete',
     CREATE_A_ITEM:BASE_URL+'/room/createItem',
     CHANGE_USER_PERMISSIONS:BASE_URL+'/room/changePermissions',
+    CRETE_A_ROOM:BASE_URL+'/room/createRoom',
 }
 
 export const ratingLinks = {

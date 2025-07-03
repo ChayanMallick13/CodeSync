@@ -4,6 +4,7 @@ const User = require("../Models/User");
 const File = require("../Models/File");
 const Folder = require("../Models/Folder");
 const Media = require("../Models/Media");
+const Permissions = require("../Models/Permissions");
 const { removeFileFromCloudinary } = require("../Utilities/FileRemover");
 const { mapMediaTypeToCloudinaryResource } = require("../Data/extensionsData");
 
@@ -15,14 +16,15 @@ function getRandomRGBColor() {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-
 exports.handleUserRoomJoin = async(data,socket) => {
     try {
-        const {roomId,userId,isDash} = data;
+        const {roomId,userId,isDash,userDetails,remove} = data;
 
         if(isDash){
             socket.join(roomId);
-            console.log('Yses correct');
+            // const permissions = await Permiss
+            socket.to(roomId).emit('checkNewMember',{userDetails:userDetails,remove});
+            console.log('temp',userDetails);
             return;
         }
 
@@ -60,6 +62,7 @@ exports.handleUserRoomJoin = async(data,socket) => {
         const body = {
             newUser:`${user.firstName} ${user?.lastName}`,
             room:newRoom,
+            newUserDetails:user,
         }
 
         socket.to(roomId).emit('user-join-event',body);
@@ -165,7 +168,7 @@ exports.handleUserRoomLeave = async(data,socket) => {
 }
 
 exports.upDateOldData = async(data,io) => {
-    const {itemId,type,roomId,userName,operation,oldName,isnew} = data;
+    const {itemId,type,roomId,userName,operation,oldName,isnew,recover} = data;
     console.log(data);
     let item = '';
     if(type==='file'){
@@ -185,7 +188,55 @@ exports.upDateOldData = async(data,io) => {
         operation,
         type,
         isnew,
+        recover,
     };
     console.log(res);
     io.to(roomId).emit('fileChnagedSocketRes',res);
+}
+
+exports.removeUserFromRoom = async(data,socket) => {
+    const {targetUserId,userId,kick,ban,roomId,targetUser,kickedBy} = data;
+    // console.clear();
+    // console.log('ppp',data);
+
+
+    let permitted = !kick;
+    const roomDetails = await Room.findById(roomId);
+
+    if(!permitted){
+        permitted = permitted || (roomDetails.owner.equals(userId));
+    }
+
+    // get the this user permisisions
+    if(!permitted){
+        const permissions = await Permissions.findOne({
+            User:userId,
+            Room:roomId,
+        });
+        permitted = permissions.delete;
+    }
+
+    if(!permitted){
+        return;
+    }
+
+    let updateValue = {
+        $pull:{
+            permittedUsers:targetUserId,
+            activeUsers:{user:targetUserId},
+        }
+    };
+
+    if(ban){
+        updateValue = {...updateValue,$push:{
+            bannedUsers:targetUserId,
+        }}
+    }
+
+    const newRoom = await Room.findByIdAndUpdate(roomDetails._id,updateValue,{new:true});
+    console.log(data);
+    console.log(newRoom);
+
+    socket.to(roomId).emit('checkNewMember',{userDetails:{_id:targetUserId},remove:true,targetUser,kickedBy});
+
 }

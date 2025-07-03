@@ -4,7 +4,7 @@ import { RiDeleteBin5Line } from "react-icons/ri";
 import { useSelector } from "react-redux";
 import RenameAItem from "../Common/Modals/EditorModals/RenameAItem";
 import DeleteAItem from "../Common/Modals/EditorModals/DeleteAItem";
-import { getItemDetails } from "../../Services/Operations/Room_Apis";
+import { getItemDetails, handleUndoDelete } from "../../Services/Operations/Room_Apis";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -13,10 +13,12 @@ const MediaIconComponet = ({ mediaId, addObjectToActive, socketRef,isDeleted,per
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [media, setMedia] = useState(null);
+  const [disableBtn,setDisableBtn] = useState(false);
+  const {user} = useSelector(state => state.profile);
   
 
   const socket = socketRef?.current;
-  function handleChange({item,userName,oldName,type,operation}){
+  function handleChange({item,userName,oldName,type,operation,recover}){
     // console.log(item?._id,type,operation,mediaId,'media');
     // console.log(item?._id,mediaId,item?._id===mediaId,type);
     if(mediaId===item?._id && type==='media'){
@@ -27,7 +29,7 @@ const MediaIconComponet = ({ mediaId, addObjectToActive, socketRef,isDeleted,per
       if(operation==='rename')
         toast.success(`Media ${oldName} renamed to ${item?.name} by ${userName}`);
       else
-        toast.success(`Media ${item?.name} deleted by ${userName}`);
+        toast.success(`Media ${item?.name} ${recover?('Recovered'):('Deleted')} by ${userName}`);
     }
   }
 
@@ -70,7 +72,7 @@ const MediaIconComponet = ({ mediaId, addObjectToActive, socketRef,isDeleted,per
       {permissions?.delete &&
           <div
           className={`w-0 group-hover:w-max absolute right-0 text-lg items-center flex gap-x-1 
-              bg-slate-900 px-0 group-hover:px-2 font-extrabold ${(media?.isDeleted)?('hidden'):('')}`}
+              bg-slate-900 px-0 group-hover:px-2 font-extrabold ${(media?.isDeleted || isDeleted)?('hidden'):('')}`}
         >
           <button
             onClick={() => {
@@ -87,6 +89,19 @@ const MediaIconComponet = ({ mediaId, addObjectToActive, socketRef,isDeleted,per
             <RiDeleteBin5Line />
           </button>
         </div>
+      }
+      {
+        permissions?.delete&&<button className={`${(isDeleted || media?.isDeleted)?('block'):('hidden')} font-extrabold
+        text-green-400 absolute right-0`}
+        disabled={disableBtn}
+        onClick={()=>{
+          console.clear();
+          console.log('Hello');
+          handleUndoDelete(null,id,'media',mediaId,()=>{},setDisableBtn,user,socketRef?.current,media?.name);
+        }}
+        >
+          Recover
+        </button>
       }
       {showRenameModal && (
         <RenameAItem
