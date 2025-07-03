@@ -17,7 +17,7 @@ module.exports = function setUpSocketIo(server) {
 
         socket.on('connect_To_Room',(data) => {
             // console.log(data);
-            handleUserRoomJoin(data,socket);
+            handleUserRoomJoin(data,io);
         })
 
         socket.on('disconnect_from_room',(data)=>{
