@@ -14,16 +14,38 @@ const ShowMembers = ({
   socket,
   showChat,
 }) => {
-  // console.log(permittedUsers, "pp");
   const { id } = useParams();
-  let activeusersId = activeUsers?.map((ele) => ele.user._id);
   const [showChangeOption, setShowChangeOptions] = useState(false);
-  const positions = ["moderator", "writer", "reader"];
-  const boxRef = useRef(null);
   const [userPosition, setUserPosition] = useState(null);
   const [disableBtn, setDisableBtn] = useState(false);
-  const { user } = useSelector((state) => state.profile);
   const [banUser, setBanUser] = useState(false);
+  const boxRef = useRef(null);
+  const { user } = useSelector((state) => state.profile);
+
+  const activeUserIds = activeUsers?.map((ele) => ele?.user?._id) || [];
+
+  const positions = ["moderator", "writer", "reader"];
+  const positionsMap = {
+    moderator: { isread: true, iswrite: true, isdelete: true },
+    writer: { isread: true, iswrite: true, isdelete: false },
+    reader: { isread: true, iswrite: false, isdelete: false },
+  };
+
+  useOutsideClickHandler(boxRef, () => setShowChangeOptions(false));
+
+  if (!owner || !user || !permittedUsers) return null;
+
+  function getDefaultUserRole(per) {
+    if (!per.write) return "reader";
+    if (!per.delete) return "writer";
+    return "moderator";
+  }
+
+  function getUserActiveColor(userId) {
+    const user = activeUsers?.find((ele) => ele?.user?._id === userId);
+    return user?.cursorColor || "transparent";
+  }
+
   async function handlePermissionChange(
     body,
     targetUser,
@@ -31,16 +53,14 @@ const ShowMembers = ({
     newPos,
     oldPos
   ) {
-    // console.log(body);
     const res = await changePermissions(
       body,
       setDisableBtn,
       setShowChangeOptions
     );
     if (res.success) {
-      toast.success("Permission Change Successfull");
-      // console.log(socket.emit,res);
-      const data = {
+      toast.success("Permission Change Successful");
+      socket.emit("userPermissionChange", {
         item: res.permission,
         targetName: targetUser,
         userName: `${user.firstName} ${user.lastName}`,
@@ -48,51 +68,16 @@ const ShowMembers = ({
         targetId,
         newPos,
         oldPos,
-      };
-      socket.emit("userPermissionChange", data);
+      });
     }
   }
-  const positionsMap = {
-    moderator: {
-      isread: true,
-      iswrite: true,
-      isdelete: true,
-    },
-    writer: {
-      isread: true,
-      iswrite: true,
-      isdelete: false,
-    },
-    reader: {
-      isread: true,
-      iswrite: false,
-      isdelete: false,
-    },
-  };
-  function getDefaultUserRole(per) {
-    if (!per.write) {
-      return "reader";
-    } else if (!per.delete) {
-      return "writer";
-    } else {
-      return "moderator";
-    }
-  }
-  useOutsideClickHandler(boxRef, () => {
-    setShowChangeOptions(false);
-  });
-  function getUserActiveColor(id) {
-    const val = activeUsers.filter((ele) => ele.user._id === id);
-    if (val.length === 0) return null;
-    return val[0].cursorColor;
-  }
+
   return (
     <div
-      className={`flex flex-col gap-y-4 p-2
-    ${!showChat ? "block" : "hidden"}
-    `}
-    ref={boxRef}
+      className={`flex flex-col gap-y-4 p-2 ${!showChat ? "block" : "hidden"}`}
+      ref={boxRef}
     >
+      {/* Owner section */}
       <div className="flex gap-x-2 items-center">
         <img
           referrerPolicy="no-referrer"
@@ -108,29 +93,30 @@ const ShowMembers = ({
           <div className="flex items-center gap-x-6">
             <p
               className={`text-sm font-extrabold ${
-                activeusersId.includes(owner._id)
+                activeUserIds.includes(owner?._id)
                   ? "text-green-500"
                   : "text-red-500"
               }`}
             >
-              {activeusersId.includes(owner._id) ? "Active" : "Inactive"}
+              {activeUserIds.includes(owner?._id) ? "Active" : "Inactive"}
             </p>
             <div
               className="h-[10px] w-[10px] rounded-full"
-              style={{
-                backgroundColor:
-                  getUserActiveColor(owner?._id) || "transparent",
-              }}
+              style={{ backgroundColor: getUserActiveColor(owner?._id) }}
             />
           </div>
         </div>
       </div>
+
+      {/* Permitted users section */}
       {permittedUsers.map((userParams, key) => {
+        const isActive = activeUserIds.includes(userParams?._id);
+        const role = getDefaultUserRole(userParams?.permissions);
+        const canShowOptions =
+          thisUsersPermissions?.delete && userParams?._id !== user?._id;
+
         return (
-          <div
-            key={key}
-            className="flex gap-x-2 items-center w-full relative"
-          >
+          <div key={key} className="flex gap-x-2 items-center w-full relative">
             <img
               referrerPolicy="no-referrer"
               alt="user"
@@ -142,30 +128,17 @@ const ShowMembers = ({
                 {userParams?.firstName} {userParams?.lastName}
               </p>
               <p
-                className={`text-sm font-bold
-              ${
-                userParams.permissions.delete
-                  ? "text-indigo-600"
-                  : userParams.permissions.write
-                  ? "text-orange-600"
-                  : "text-blue-600"
-              }
-              flex items-center justify-between
-              `}
+                className={`text-sm font-bold ${
+                  role === "moderator"
+                    ? "text-indigo-600"
+                    : role === "writer"
+                    ? "text-orange-600"
+                    : "text-blue-600"
+                } flex items-center justify-between`}
               >
-                {userParams.permissions.delete
-                  ? "Moderator"
-                  : userParams.permissions.write
-                  ? "Writer"
-                  : "Reader"}
-                {thisUsersPermissions.delete && (
-                  <button
-                    onClick={() => {
-                      setShowChangeOptions(key+1);
-                      console.clear();
-                      // console.log(showChangeOption);
-                    }}
-                  >
+                {role}
+                {canShowOptions && (
+                  <button onClick={() => setShowChangeOptions(key + 1)}>
                     <SlOptionsVertical />
                   </button>
                 )}
@@ -173,67 +146,57 @@ const ShowMembers = ({
               <div className="flex items-center gap-x-6">
                 <p
                   className={`text-sm font-extrabold ${
-                    activeusersId.includes(userParams?._id)
-                      ? "text-green-500"
-                      : "text-red-500"
+                    isActive ? "text-green-500" : "text-red-500"
                   }`}
                 >
-                  {activeusersId.includes(userParams?._id)
-                    ? "Active"
-                    : "Inactive"}
+                  {isActive ? "Active" : "Inactive"}
                 </p>
                 <div
                   className="h-[10px] w-[10px] rounded-full"
                   style={{
-                    backgroundColor:
-                      getUserActiveColor(userParams?._id) || "transparent",
+                    backgroundColor: getUserActiveColor(userParams?._id),
                   }}
                 />
               </div>
             </div>
-            {(showChangeOption===(key+1)) && (
+
+            {/* Dropdown: Change Role / Ban / Kick */}
+            {showChangeOption === key + 1 && (
               <div
                 className="absolute bg-slate-700 border-slate-100/60 border-[1px] p-2 w-full
-              rounded-xl flex flex-col gap-y-2  z-20
-              "
+              rounded-xl flex flex-col gap-y-2 z-20"
               >
                 <h3 className="font-bold">
                   Change Role for {userParams.firstName} {userParams.lastName}
                 </h3>
+
                 <select
-                  defaultValue={getDefaultUserRole(userParams.permissions)}
+                  defaultValue={role}
                   className="bg-slate-400 p-2 rounded-xl focus:border-slate-100/50 focus:border-[1px]
-                outline-none text-black font-bold
-                "
-                  onChange={(e) => {
-                    setUserPosition(e.target.value);
-                  }}
+                outline-none text-black font-bold"
+                  onChange={(e) => setUserPosition(e.target.value)}
                 >
-                  {positions.map((ele) => {
-                    return (
-                      <option key={ele} value={ele}>
-                        {ele}
-                      </option>
-                    );
-                  })}
+                  {positions.map((ele) => (
+                    <option key={ele} value={ele}>
+                      {ele}
+                    </option>
+                  ))}
                 </select>
+
                 <div className="flex items-center justify-around">
                   <button
-                    onClick={() => {
-                      setShowChangeOptions(false);
-                    }}
+                    onClick={() => setShowChangeOptions(false)}
                     className="bg-slate-400 py-2 px-6 mt-2 text-black font-bold hover:bg-slate-300
-                  duration-200 transition-all rounded-xl
-                  "
+                    duration-200 transition-all rounded-xl"
                   >
                     Cancel
                   </button>
+
                   <button
                     className="bg-yellow-400 py-2 px-6 mt-2 text-black font-bold hover:bg-yellow-300
-                  duration-200 transition-all rounded-xl
-                  "
-                    onClick={(e) => {
-                      const oldPos = getDefaultUserRole(userParams.permissions);
+                    duration-200 transition-all rounded-xl"
+                    onClick={() => {
+                      const oldPos = role;
                       if (!userPosition || oldPos === userPosition) {
                         toast.error("No Changes Made ...");
                         return;
@@ -241,8 +204,8 @@ const ShowMembers = ({
                       let body = {
                         targetUser: userParams._id,
                         roomId: id,
+                        ...positionsMap[userPosition],
                       };
-                      body = { ...body, ...positionsMap[userPosition] };
                       handlePermissionChange(
                         body,
                         `${userParams.firstName} ${userParams.lastName}`,
@@ -256,24 +219,21 @@ const ShowMembers = ({
                     Save
                   </button>
                 </div>
-                {((owner._id===user._id) || (thisUsersPermissions.delete && !userParams.permissions.delete))&&
+
+                {(owner?._id === user?._id ||
+                  (thisUsersPermissions?.delete &&
+                    !userParams.permissions?.delete)) && (
                   <div>
-                    <div>
-                      <label
-                        className="flex items-center gap-x-3 text-sm mt-3 text-orange-500 font-bold
-                      cursor-pointer
-                      "
-                      >
-                        <input
-                          type="checkbox"
-                          checked={banUser}
-                          onChange={(e) => {
-                            setBanUser(e.target.checked);
-                          }}
-                        />
-                        <p>Ban User</p>
-                      </label>
-                    </div>
+                    <label
+                      className="flex items-center gap-x-3 text-sm mt-3 text-orange-500 font-bold cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={banUser}
+                        onChange={(e) => setBanUser(e.target.checked)}
+                      />
+                      <p>Ban User</p>
+                    </label>
 
                     <button
                       className="font-bold text-center w-full text-red-500"
@@ -284,8 +244,8 @@ const ShowMembers = ({
                           kick: true,
                           ban: banUser,
                           roomId: id,
-                          targetUser: `${user.firstName} ${user.lastName}`,
-                          kickedBy: `${userParams.firstName} ${userParams.lastName}`,
+                          targetUser: `${userParams.firstName} ${userParams.lastName}`,
+                          kickedBy: `${user.firstName} ${user.lastName}`,
                         });
                         setShowChangeOptions(false);
                       }}
@@ -293,7 +253,7 @@ const ShowMembers = ({
                       Remove {`${userParams.firstName} ${userParams.lastName}`}
                     </button>
                   </div>
-                }
+                )}
               </div>
             )}
           </div>
