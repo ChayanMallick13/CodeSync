@@ -56,7 +56,10 @@ const RoomCard = ({ activeUsers, name, owner,description,_id ,permissions}) => {
 
   useEffect(
     () => {
-        const socket = io(process.env.REACT_APP_SOCKET_IO_BACKEND);
+        const socket = io(process.env.REACT_APP_SOCKET_IO_BACKEND,{
+          withCredentials:true,
+          transports:['websocket'],
+        });
         socketRef.current = socket;
 
         window.addEventListener('beforeunload',handleLeaveRoom);
