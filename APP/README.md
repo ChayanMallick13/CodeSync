@@ -1,31 +1,56 @@
-# React & Tailwind CSS Starter Pack
+# CodeSync - Real-Time Collaborative Code Editor
 
-This is a starter pack for creating React projects with Tailwind CSS configured. It uses React version **18.2** and Tailwind CSS version **3.2**.
+**CodeSync** is a powerful online collaborative code editor designed and built by [@chayanmallick13](https://github.com/chayanmallick13). This project enables multiple developers to collaborate in real-time using Monaco Editor and WebSockets, offering granular user roles and secure room-based sharing via join codes.
 
-## Usage
+---
 
-This starter pack includes a basic setup for using **Tailwind CSS with React**. To start building your own components and styles, follow these steps:
+## ✨ Features
 
-1. Clone the repository to your local machine.
-    ```sh
-    git clone https://github.com/thepranaygupta/react-tailwind-css-starter-pack.git
-    ```
+- 🔐 **Room-Based Access with Join Codes**  
+  Securely create and join collaborative rooms using unique join codes.
 
-1. Install the required packages.
-    ```sh
-    cd react-tailwind-css-starter-pack
-    npm install
-    ```
+- 🧑‍💻 **Real-Time Code Collaboration**  
+  Multiple users can edit the same code simultaneously using Yjs + Monaco.
 
-1. Start the development server.
-    ```sh
-    npm start
-    ```
-1. Open the project in your browser at [`http://localhost:3000`](http://localhost:3000) to view your project.
-1. Create your React components and add your styles using Tailwind classes. You can also create new CSS files and import them into your components.
+- 👑 **Role-Based Permissions**  
+  Each user can be assigned roles like:
+  - **Owner**: Full control over the room and members
+  - **Moderator**: Can assist in managing users
+  - **Writer**: Can edit code
+  - **Reader**: View-only access
 
-The project is set up to use `postcss-cli` to process your CSS files. You can add your own `tailwind.config.js` file to customize your Tailwind setup.
+- 🎨 **Customizable Preferences**  
+  Change themes, font sizes, and choose ligature-supported fonts (like Fira Code, JetBrains Mono, etc.)
 
-## Contributing
+- 🟢 **Live Active Status**  
+  Real-time display of users currently active in a room.
 
-Contributions are welcome! If you have any suggestions or find any issues, please feel free to open an issue or a pull request.
+- 💬 **Chat Integration**  
+  Built-in chat for room communication (extendable).
+
+---
+
+## 🧰 Tech Stack
+
+- **Frontend:** React, Redux Toolkit, Tailwind CSS, Monaco Editor  
+- **Backend:** Node.js, Express, MongoDB, Mongoose  
+- **WebSocket:** Socket.IO, Yjs, y-websocket  
+- **Authentication:** JWT-based authentication
+
+---
+
+## 🛠️ Installation Instructions
+
+### ✅ Prerequisites
+
+- Node.js (v18 or above)
+- MongoDB (local or Atlas)
+- A modern web browser (Chrome/Edge/Firefox)
+
+---
+
+### 🔧 Clone the Repository
+
+```bash
+git clone https://github.com/chayanmallick13/CodeSync.git
+cd CodeSync
