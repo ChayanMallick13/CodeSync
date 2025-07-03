@@ -54,8 +54,10 @@ const EditorPage = () => {
         changedFiles:chnagedFilesRef.current,
       }
     // console.log('The Value is -> ',chnagedFilesRef.current);
-    socketRef.current?.emit('disconnect_from_room',data);
-    socketRef.current?.disconnect();
+    socketRef.current?.emit('disconnect_from_room',data,()=>{
+      socketRef.current?.disconnect()
+    });
+    
     dispatch(resetRoom());
     
   }
