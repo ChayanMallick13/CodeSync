@@ -15,11 +15,14 @@ import ResetPassword from "./Pages/ResetPassword";
 import ResetMailSentPage from "./Pages/ResetMailSentPage";
 import EditorPage from "./Pages/EditorPage";
 import DemoEditor from "./Pages/DemoEditor";
+import Logo from './Assets/Logo/favicon.png';
+import useFavicon from "./Hooks/useFaviconAndTitle";
 
 function App() {
   const { user } = useSelector((state) => state.profile);
   const { isLoggedIn } = useSelector((state) => state.auth);
   const location = useLocation();
+  useFavicon(Logo,'CodeSync – Real-Time Collaborative Code Editor');
   return (
     <div className="bg-black min-h-screen w-[100%] overflow-x-hidden overflow-y-auto
     h-[100vh]
