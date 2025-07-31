@@ -56,7 +56,7 @@ const FileIconComponent = ({ fileId, addObjectToActive, socketRef,isDeleted,perm
         toast.success(`File ${item?.name} ${recover?('Recovered'):('Deleted')} by ${userName}`);
       }
       else{
-        toast.success('yo yo');
+        // toast.success('yo yo');
       }
     }
   }
